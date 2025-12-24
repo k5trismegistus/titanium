@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Whitelist check helper
+    function isAllowed() {
+      return exists(/databases/$(database)/documents/allowedUsers/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/allowedUsers/$(request.auth.uid)).data.allowed == true;
+    }
+
+    // Notes: Users can only read/write their own notes
+    match /notes/{noteId} {
+      // Split rules for better debugging and standard compliance
+      allow read: if request.auth != null && 
+                     isAllowed() && 
+                     resource.data.userId == request.auth.uid;
+                     
+      allow create: if request.auth != null && 
+                       isAllowed() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      allow update: if request.auth != null && 
+                       isAllowed() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+                       
+      allow delete: if request.auth != null && 
+                       isAllowed() && 
+                       resource.data.userId == request.auth.uid;
+
+      // Subcollection: Sections (Inherit permissions conceptually)
+      match /sections/{sectionId} {
+        allow read: if request.auth != null && 
+                       isAllowed() && 
+                       resource.data.userId == request.auth.uid;
+        // Writes are done by backend (Cloud Function), but if we needed client write:
+        allow write: if false; 
+      }
+    }
+    
+    // AllowedUsers: specific admins can write, users can read their own
+    match /allowedUsers/{userId} {
+    	allow read: if request.auth != null && request.auth.uid == userId;
+      // In a real app, only an Admin could write here. For MVP, maybe no one? 
+      // Manual console edit only.
+      allow write: if false; 
+    }
+  }
+}
