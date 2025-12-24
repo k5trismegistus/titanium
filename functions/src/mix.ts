@@ -61,26 +61,27 @@ export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB
 
     const prompt = `
       You are an expert editor and writer.
-      
+
       Task: Create a new cohesive document based on the following notes.
       Target Audience/Format: ${category || "General Note / Memo"}
-      
+
       Instructions:
       - Synthesize the information. Do not just list it.
-      - Use the "Target Audience/Format" to decide the tone and structure. 
+      - Use the "Target Audience/Format" to decide the tone and structure.
         (e.g. if 'Qiita': technical, code-focused. if 'Blog': engaging, personal. if 'Memo': concise, bullet points.)
       - If there are conflicts, mention them.
       - Output in Markdown.
+      - Do not use Markdown emphasis or decorations such as **, __, *, or _ for emphasis.
 
       Source Notes:
       ${notesData.map(n => `--- Note: ${n.id} ---\n${n.markdown}`).join("\n\n")}
-      
-      **Goal**: Create a new insight, summary, or article that bridges the concepts found in the input notes.
-      **Style**: Professional, clear, and insightful.
-      **Language**: The output MUST be in the dominant language of the inputs.
-      ${stylePrompt ? `**User Direction**: ${stylePrompt}` : ""}
-      
-      **Output**:
+
+      Goal: Create a new insight, summary, or article that bridges the concepts found in the input notes.
+      Style: Professional, clear, and insightful.
+      Language: The output MUST be in the dominant language of the inputs.
+      ${stylePrompt ? `User Direction: ${stylePrompt}` : ""}
+
+      Output:
       Generate the new content in Markdown format. Do not include introductory filler.
     `;
 
