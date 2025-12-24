@@ -172,7 +172,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                     </p>
                                     <p>
                                         上部のCategoryは生成のトーンに影響します。
-                                        ドロップダウンから新しいCategoryを追加できます。
+                                        ドロップダウン横のAddから新しいCategoryを追加できます。
                                         Mix結果はそのまま新規ノートとして保存できます。
                                     </p>
                                 </>
@@ -187,7 +187,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                     </p>
                                     <p>
                                         Category sets the output tone.
-                                        You can add new categories from the dropdown.
+                                        Use Add next to the dropdown to create a new category.
                                         You can save the Mix result as a new note.
                                     </p>
                                 </>

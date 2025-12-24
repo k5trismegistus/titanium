@@ -25,7 +25,8 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
     isMixing,
     isMixAllowed
 }) => {
-    const [draftCategory, setDraftCategory] = useState(category);
+    const [draftCategory, setDraftCategory] = useState("");
+    const [isAddingCategory, setIsAddingCategory] = useState(false);
     const trimmedCategory = category.trim();
     const options = categories.filter((item) => item.trim().length > 0);
     const hasCurrent = trimmedCategory.length > 0 &&
@@ -35,61 +36,105 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
         : [trimmedCategory, ...options];
 
     useEffect(() => {
-        setDraftCategory(category);
-    }, [category]);
-
-    const handleCommit = () => {
-        const nextValue = draftCategory.trim();
-        if (!nextValue) {
-            const fallback = trimmedCategory || resolvedOptions[0] || "";
-            if (fallback && fallback !== category) {
-                setCategory(fallback);
-            }
-            setDraftCategory(fallback);
-            return;
+        if (!isAddingCategory) {
+            setDraftCategory("");
         }
+    }, [isAddingCategory]);
+
+    useEffect(() => {
+        if (!trimmedCategory && resolvedOptions.length > 0) {
+            setCategory(resolvedOptions[0]);
+        }
+    }, [trimmedCategory, resolvedOptions, setCategory]);
+
+    const handleSelectCategory = (value: string) => {
+        if (value && value !== category) {
+            setCategory(value);
+        }
+    };
+
+    const handleAddCategory = () => {
+        const nextValue = draftCategory.trim();
+        if (!nextValue) return;
 
         const match = resolvedOptions.find(
             (item) => item.toLowerCase() === nextValue.toLowerCase()
         );
         if (match) {
-            if (match !== category) {
-                setCategory(match);
-            }
-            setDraftCategory(match);
-            return;
+            handleSelectCategory(match);
+        } else {
+            setCategory(nextValue);
+            onAddCategory(nextValue);
         }
 
-        setCategory(nextValue);
-        setDraftCategory(nextValue);
-        onAddCategory(nextValue);
+        setDraftCategory("");
+        setIsAddingCategory(false);
     };
 
     return (
         <div className="flex h-12 items-center justify-end gap-3 px-4">
             <SaveIndicator status={saveStatus} />
             <label className="text-xs text-gray-400">Category</label>
-            <div className="relative">
-                <input
-                    list="category-options"
-                    value={draftCategory}
-                    onChange={(e) => setDraftCategory(e.target.value)}
-                    onBlur={handleCommit}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            e.currentTarget.blur();
-                        }
-                    }}
-                    placeholder="Select or type"
-                    className="text-sm border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none"
-                />
-                <datalist id="category-options">
+            <div className="flex items-center gap-2">
+                <select
+                    value={trimmedCategory}
+                    onChange={(e) => handleSelectCategory(e.target.value)}
+                    className="min-w-[160px] text-base border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none"
+                >
                     {resolvedOptions.map((item) => (
-                        <option key={item} value={item} />
+                        <option key={item} value={item}>
+                            {item}
+                        </option>
                     ))}
-                </datalist>
+                </select>
+                {!isAddingCategory ? (
+                    <button
+                        type="button"
+                        onClick={() => setIsAddingCategory(true)}
+                        className="text-xs font-medium text-gray-500 hover:text-gray-700"
+                    >
+                        Add
+                    </button>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <input
+                            value={draftCategory}
+                            onChange={(e) => setDraftCategory(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleAddCategory();
+                                }
+                                if (e.key === "Escape") {
+                                    setDraftCategory("");
+                                    setIsAddingCategory(false);
+                                }
+                            }}
+                            placeholder="New category"
+                            className="w-36 text-base border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none"
+                            autoFocus
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAddCategory}
+                            disabled={!draftCategory.trim()}
+                            className="text-xs font-medium text-primary hover:text-green-700 disabled:opacity-50"
+                        >
+                            Add
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDraftCategory("");
+                                setIsAddingCategory(false);
+                            }}
+                            className="text-xs font-medium text-gray-400 hover:text-gray-600"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
             </div>
-            <MixButton onClick={onMix} disabled={isMixing || !isMixAllowed} />
+            <MixButton onClick={onMix} disabled={!isMixAllowed} isLoading={isMixing} />
         </div>
     );
 };

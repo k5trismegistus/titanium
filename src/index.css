@@ -10,6 +10,26 @@
   }
 }
 
+@media (max-width: 768px) {
+  input,
+  select {
+    font-size: 16px;
+  }
+}
+
+@keyframes mix-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mix-orbit {
+  animation: mix-orbit 1.1s linear infinite;
+}
+
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-style: normal;

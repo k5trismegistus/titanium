@@ -145,7 +145,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                 }}
                 placeholder="Start writing..."
                 readOnly={readOnly}
-                className="w-full resize-none outline-none text-lg text-text leading-relaxed placeholder:text-gray-300"
+                className="w-full resize-none outline-none text-lg text-text leading-relaxed placeholder:text-gray-300 break-all"
                 minRows={20}
             />
 
@@ -209,7 +209,7 @@ const MarkdownPreview = ({ markdown }: { markdown: string }) => {
     const lines = markdown.split("\n");
 
     return (
-        <div className="space-y-1 text-gray-700">
+        <div className="space-y-1 text-gray-700 break-all">
             {lines.map((line, index) => {
                 const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
                 if (headingMatch) {
