@@ -1,25 +1,40 @@
 import React from 'react';
-import { Header } from '../common/Header';
 import { SuggestRail } from '../suggestions/SuggestRail';
+import type { DemoSuggestionMap } from '../suggestions/SuggestRail';
+import { EditorProvider } from '../../context/EditorContext';
 
-export const MainLayout = ({ children }: { children: React.ReactNode }) => {
-    const [selectedNoteIds, setSelectedNoteIds] = React.useState<string[]>([]);
+type MainLayoutProps = {
+    children: React.ReactNode;
+    editorHeader?: React.ReactNode;
+    selectedNoteIds: string[];
+    onToggleNote: (id: string) => void;
+    demoSuggestions?: DemoSuggestionMap;
+};
 
-    const toggleNote = (id: string) => {
-        setSelectedNoteIds(prev =>
-            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-        );
-    };
-
+export const MainLayout = ({ children, editorHeader, selectedNoteIds, onToggleNote, demoSuggestions }: MainLayoutProps) => {
     return (
-        <div className="min-h-screen bg-white">
-            <Header selectedNoteIds={selectedNoteIds} />
-            <div className="flex">
-                <main className="flex-1 px-4 py-8 lg:pr-80 min-h-[calc(100vh-3.5rem)]">
-                    {children}
-                </main>
-                <SuggestRail selectedNoteIds={selectedNoteIds} onToggleNote={toggleNote} />
+        <EditorProvider>
+            <div
+                className="min-h-screen bg-white"
+                style={{
+                    ["--global-header-height" as string]: "3.5rem",
+                    ["--editor-header-height" as string]: editorHeader ? "3rem" : "0px"
+                }}
+            >
+                {editorHeader && (
+                    <div className="sticky top-14 z-40 border-b border-muted bg-white/95 backdrop-blur">
+                        {editorHeader}
+                    </div>
+                )}
+                <div className="flex min-h-[calc(100vh-3.5rem)]">
+                    <main className="flex-1 px-4 py-8 pr-12 lg:pr-80">
+                        {children}
+                    </main>
+                    <div>
+                        <SuggestRail selectedNoteIds={selectedNoteIds} onToggleNote={onToggleNote} demoSuggestions={demoSuggestions} />
+                    </div>
+                </div>
             </div>
-        </div>
+        </EditorProvider>
     );
 };

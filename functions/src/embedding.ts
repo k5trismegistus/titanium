@@ -1,50 +1,51 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
-// import { VertexAI } from "@google-cloud/vertexai";
+import { PredictionServiceClient, helpers } from "@google-cloud/aiplatform";
+import { projectID } from "firebase-functions/params";
 
-const db = admin.firestore();
+// Initialize client with specific API Endpoint for the region
+const clientOptions = {
+    apiEndpoint: "asia-northeast1-aiplatform.googleapis.com"
+};
 
-// const project = process.env.GCLOUD_PROJECT || process.env.FIREBASE_CONFIG && JSON.parse(process.env.FIREBASE_CONFIG).projectId;
-// const location = "asia-northeast1";
+const client = new PredictionServiceClient(clientOptions);
 
-// const vertexAI = new VertexAI({ project: project, location: location });
+export async function generateEmbedding(text: string, title?: string, taskType: string = "RETRIEVAL_DOCUMENT"): Promise<number[]> {
+    const project = projectID.value();
+    const location = "asia-northeast1";
+    // text-embedding-004
+    const endpoint = `projects/${project}/locations/${location}/publishers/google/models/text-embedding-004`;
 
-export const updateEmbedding = onCall<{ noteId: string }>({ region: "asia-northeast1" }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "User must be logged in.");
-    }
-    const uid = request.auth.uid;
+    const instance: any = {
+        content: text,
+        task_type: taskType
+    };
 
-    const userDoc = await db.collection("allowedUsers").doc(uid).get();
-    if (!userDoc.exists || userDoc.data()?.allowed !== true) {
-        throw new HttpsError("permission-denied", "User is not in the whitelist.");
-    }
-
-    const { noteId } = request.data;
-    if (!noteId) return;
-
-    const noteRef = db.collection("notes").doc(noteId);
-    const noteSnap = await noteRef.get();
-
-    if (!noteSnap.exists || noteSnap.data()?.userId !== uid) {
-        throw new HttpsError("permission-denied", "Access denied.");
+    if (title) {
+        instance.title = title;
     }
 
-    const text = noteSnap.data()?.markdown || "";
-    if (!text) return;
+    const instanceValue = helpers.toValue(instance) as any;
+    if (!instanceValue) throw new Error("Failed to convert instance to Value");
+
+    const instances = [instanceValue];
 
     try {
-        // For now, we are skipping actual embedding generation to ensure stability
-        // as the embedding API signature varies between versions.
-        // In a full implementation, you would use:
-        // const result = await vertexAI.getGenerativeModel({model: "text-embedding-004"}).embedContent(...)
+        const [response] = await client.predict({
+            endpoint,
+            instances,
+        });
 
-        console.log("Skipping embedding for note:", noteId);
-
-        return { success: true };
-    } catch (e: any) {
-        console.error("Embedding Error:", e);
-        // Don't fail the client for background embedding
-        return { success: false };
+        const predictions = response.predictions;
+        if (predictions && predictions.length > 0) {
+            const result: any = helpers.fromValue(predictions[0] as any);
+            // Format for text-embedding-004: { embeddings: { statistics: { ... }, values: [...] } }
+            if (result && result.embeddings && result.embeddings.values) {
+                return result.embeddings.values;
+            }
+        }
+    } catch (error) {
+        console.error("Embedding generation failed:", error);
+        throw error;
     }
-});
+
+    return [];
+}

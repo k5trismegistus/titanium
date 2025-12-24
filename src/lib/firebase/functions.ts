@@ -14,6 +14,6 @@ export interface MixResponse {
 
 export const callMix = (data: MixRequest) => httpsCallable<MixRequest, { markdown: string }>(functions, 'mix')(data);
 
-export const searchRelated = (data: { noteId: string; limit?: number }) =>
-    httpsCallable<{ noteId: string; limit?: number }, { results: any[] }>(functions, 'searchRelated')(data);
+export const searchRelated = (data: { noteId: string; limit?: number; queryText?: string }) =>
+    httpsCallable<{ noteId: string; limit?: number; queryText?: string }, { results: any[] }>(functions, 'searchRelated')(data);
 export const updateEmbedding = httpsCallable<{ noteId: string }, void>(functions, 'updateEmbedding');

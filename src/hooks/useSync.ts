@@ -5,11 +5,13 @@ import { useAuth } from "../lib/firebase/auth";
 
 // MVP Strategy: Single persistent note for the user (Scratchpad)
 // In a full app, this would take a noteId argument.
-export const useSync = (noteId: string, initialContent: string) => {
+export const useSync = (noteId: string, initialContent: string, initialCategory: string = "Memo") => {
     const { user } = useAuth();
     const [content, setContent] = useState(initialContent);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSavedContent, setLastSavedContent] = useState(initialContent);
+    const [category, setCategory] = useState(initialCategory);
+    const [lastSavedCategory, setLastSavedCategory] = useState(initialCategory);
     const isFirstLoad = useRef(true);
 
     // Load initial content
@@ -31,6 +33,9 @@ export const useSync = (noteId: string, initialContent: string) => {
                     const data = noteDoc.data();
                     setContent(data.markdown || "");
                     setLastSavedContent(data.markdown || "");
+                    const nextCategory = data.category || initialCategory;
+                    setCategory(nextCategory);
+                    setLastSavedCategory(nextCategory);
                 }
             } catch (e) {
                 console.error("Failed to load note:", e);
@@ -45,7 +50,7 @@ export const useSync = (noteId: string, initialContent: string) => {
     // Auto-save logic
     useEffect(() => {
         if (!user || isFirstLoad.current || !noteId) return;
-        if (content === lastSavedContent) return;
+        if (content === lastSavedContent && category === lastSavedCategory) return;
 
         const timer = setTimeout(async () => {
             setIsSaving(true);
@@ -54,11 +59,13 @@ export const useSync = (noteId: string, initialContent: string) => {
                 const noteRef = doc(db, "notes", docId);
                 await setDoc(noteRef, {
                     markdown: content,
+                    category: category,
                     userId: user.uid,
                     updatedAt: serverTimestamp(),
                 }, { merge: true });
 
                 setLastSavedContent(content);
+                setLastSavedCategory(category);
                 console.log("Saved to Firestore.");
             } catch (e) {
                 console.error("Failed to save note:", e);
@@ -68,7 +75,7 @@ export const useSync = (noteId: string, initialContent: string) => {
         }, 2000); // 2 second debounce
 
         return () => clearTimeout(timer);
-    }, [content, user, lastSavedContent, noteId]);
+    }, [content, category, user, lastSavedContent, lastSavedCategory, noteId]);
 
-    return { content, setContent, isSaving };
+    return { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory };
 };

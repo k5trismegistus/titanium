@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "deploy": "npm run build && firebase deploy --only functions,firestore,storage,hosting",
+    "deploy": "npm run deploy:backend && npm run deploy:frontend",
+    "deploy:backend": "firebase deploy --only functions,firestore,storage",
+    "deploy:frontend": "npm run build && firebase deploy --only hosting",
     "lint": "eslint .",
     "preview": "vite preview"
   },

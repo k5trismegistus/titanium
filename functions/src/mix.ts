@@ -6,7 +6,8 @@ import { projectID } from "firebase-functions/params";
 const db = admin.firestore();
 
 // Initialize at runtime
-const location = "asia-northeast1";
+const preferredLocations = ["asia-northeast1", "us-central1"];
+const modelCandidates = ["gemini-2.5-flash"];
 
 interface MixRequest {
   noteIds: string[];
@@ -54,8 +55,9 @@ export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB
 
   // 3. Vertex AI Logic (using @google-cloud/vertexai)
   try {
-    const vertexAI = new VertexAI({ location, project: projectID.value() });
-    const generativeModel = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro-002" });
+    const project = projectID.value();
+    let text = "";
+    let lastError: any = null;
 
     const prompt = `
       You are an expert editor and writer.
@@ -82,11 +84,30 @@ export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB
       Generate the new content in Markdown format. Do not include introductory filler.
     `;
 
-    const result = await generativeModel.generateContent(prompt);
+    for (const location of preferredLocations) {
+      const vertexAI = new VertexAI({ location, project });
+      for (const model of modelCandidates) {
+        try {
+          const generativeModel = vertexAI.getGenerativeModel({ model });
+          const result = await generativeModel.generateContent(prompt);
+          const response = await result.response;
+          text = response.candidates?.[0].content.parts[0].text || "";
+          if (text) break;
+        } catch (e: any) {
+          lastError = e;
+          const message = e?.message || "";
+          const isNotFound = message.includes("NOT_FOUND") || message.includes("was not found");
+          if (!isNotFound) {
+            throw e;
+          }
+        }
+      }
+      if (text) break;
+    }
 
-    // Fix: Access response correctly via result.response.candidates
-    const response = await result.response;
-    const text = response.candidates?.[0].content.parts[0].text || "";
+    if (!text) {
+      throw lastError || new Error("No available Gemini model found.");
+    }
 
     return { markdown: text };
   } catch (e: any) {

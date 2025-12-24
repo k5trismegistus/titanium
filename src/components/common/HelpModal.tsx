@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { X, Globe } from 'lucide-react';
+import noteEditImg from '../../assets/readme/note_edit.png';
+import mixSelectImg from '../../assets/readme/mix_1_select.png';
+import mixResultImg from '../../assets/readme/mix_3_result.png';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -8,6 +11,7 @@ interface HelpModalProps {
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     const [lang, setLang] = useState<'en' | 'jp'>('jp');
+    const isJP = lang === 'jp';
 
     if (!isOpen) return null;
 
@@ -18,7 +22,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                        {lang === 'jp' ? 'ヘルプ & ガイド' : 'Help & Guide'}
+                        {isJP ? 'ヘルプ & ガイド' : 'Help & Guide'}
                     </h2>
                     <div className="flex items-center gap-2">
                         <button
@@ -26,7 +30,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                         >
                             <Globe size={14} />
-                            {lang === 'jp' ? 'English' : '日本語'}
+                            {isJP ? 'English' : '日本語'}
                         </button>
                         <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
                             <X size={20} />
@@ -37,46 +41,158 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 {/* Content */}
                 <div className="p-6 overflow-y-auto max-h-[70vh] space-y-8">
 
-                    {/* Section 1: Suggestions */}
+                    {/* Section 1: Philosophy */}
                     <section>
                         <h3 className="text-lg font-bold text-primary mb-3">
-                            {lang === 'jp' ? '💡 関連ノートの提案 (Suggestions)' : '💡 Related Note Suggestions'}
+                            {isJP ? '🧭 Titaniumの思想' : '🧭 Titanium Philosophy'}
                         </h3>
-                        <p className="text-gray-600 leading-relaxed">
-                            {lang === 'jp' ? (
+                        <div className="text-gray-600 leading-relaxed space-y-3">
+                            {isJP ? (
                                 <>
-                                    Titaniumは、あなたの書いている内容をAIが分析し、過去のノートから<b>意味的に近いもの</b>を自動で提案します。<br />
-                                    単なるキーワード一致ではなく、「文脈」や「意味」をベクトル化して比較しているため、直感的に関連するアイデアが見つかります。
+                                    <p>
+                                        Titaniumは「考える流れを止めない」ためのノートです。素早く書けて、あとから自然につながる。
+                                        思考の熱量を保ったまま、<b>書く → 見つかる → 混ざる</b>を回せるように設計されています。
+                                    </p>
+                                    <p>
+                                        AIは答えを置き換えるものではなく、連想の触媒。あなたが主役で、AIは「もうひとつの視点」を
+                                        出すための相棒です。
+                                    </p>
                                 </>
                             ) : (
                                 <>
-                                    Titanium uses AI to analyze what you're writing and automatically suggests <b>semantically related notes</b> from your past work.<br />
-                                    It goes beyond simple keyword matching by vectorizing the "context" and "meaning," helping you find intuitively relevant ideas.
+                                    <p>
+                                        Titanium is built to keep your thinking in motion: write fast, rediscover naturally.
+                                        It’s designed to support a flow of <b>write → connect → synthesize</b> without breaking your momentum.
+                                    </p>
+                                    <p>
+                                        AI doesn’t replace your answers. It acts as a catalyst for association, offering another angle
+                                        while you stay in the driver’s seat.
+                                    </p>
                                 </>
                             )}
-                        </p>
+                        </div>
                     </section>
 
-                    {/* Section 2: Mix */}
+                    {/* Section 2: Basic Writing Flow */}
                     <section>
                         <h3 className="text-lg font-bold text-primary mb-3">
-                            {lang === 'jp' ? '✨ Mix (AI合成)' : '✨ Mix (AI Synthesis)'}
+                            {isJP ? '✍️ 基本の使い方' : '✍️ Core Workflow'}
                         </h3>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            {lang === 'jp' ? (
+                        <div className="text-gray-600 leading-relaxed space-y-3">
+                            {isJP ? (
                                 <>
-                                    複数のノートやアイデアを組み合わせて、<b>新しい洞察</b>を生み出す機能です。<br />
-                                    選択したノートの内容を <b>Gemini 2.0 Pro</b> (最新の推論モデル) が読み込み、それらを統合・要約・発展させた新しいコンテンツを生成します。
+                                    <p>
+                                        新規ノートを作成して、そのまま書き始めます。入力は数秒で自動保存され、
+                                        右上のステータスで保存状態を確認できます。
+                                    </p>
+                                    <p>
+                                        Markdown記法に対応しており、下部のPreviewで見え方を即確認できます。
+                                    </p>
                                 </>
                             ) : (
                                 <>
-                                    A feature to combine multiple notes or ideas to generate <b>new insights</b>.<br />
-                                    <b>Gemini 2.0 Pro</b> (the latest reasoning model) reads the selected notes and synthesizes, summarizes, or expands them into new content.
+                                    <p>
+                                        Create a new note and start writing. Your input is auto-saved after a few seconds,
+                                        and the status indicator shows whether it’s saved.
+                                    </p>
+                                    <p>
+                                        Markdown is supported, and the Preview below lets you confirm formatting as you go.
+                                    </p>
                                 </>
                             )}
-                        </p>
+                        </div>
+                        <figure className="mt-4 space-y-2">
+                            <img
+                                src={noteEditImg}
+                                alt={isJP ? 'ノート編集画面の例' : 'Example of the note editor'}
+                                className="w-full rounded-lg border border-gray-100 shadow-sm"
+                                loading="lazy"
+                            />
+                            <figcaption className="text-xs text-gray-400">
+                                {isJP ? '書く → プレビュー → 自動保存の流れ' : 'Write → Preview → Auto-save flow'}
+                            </figcaption>
+                        </figure>
+                    </section>
+
+                    {/* Section 3: Suggestions */}
+                    <section>
+                        <h3 className="text-lg font-bold text-primary mb-3">
+                            {isJP ? '💡 関連ノートの提案 (Suggestions)' : '💡 Related Note Suggestions'}
+                        </h3>
+                        <div className="text-gray-600 leading-relaxed space-y-3">
+                            {isJP ? (
+                                <>
+                                    <p>
+                                        デスクトップでは右側の「Related Thoughts」に、今書いているセクションに近いノートが表示されます。
+                                        単なるキーワード一致ではなく、文脈と意味の近さで探しているため、直感的に関連する発想が見つかります。
+                                    </p>
+                                    <p>
+                                        気になるノートをクリックすると選択状態になり、Mixの材料として使えます。
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <p>
+                                        On desktop, the “Related Thoughts” rail surfaces notes close to the section you’re currently writing.
+                                        It matches by context and meaning, not just keywords, so related ideas appear naturally.
+                                    </p>
+                                    <p>
+                                        Click a note to select it as an ingredient for Mix.
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                        <figure className="mt-4 space-y-2">
+                            <img
+                                src={mixSelectImg}
+                                alt={isJP ? '関連ノートを選択する例' : 'Selecting related notes'}
+                                className="w-full rounded-lg border border-gray-100 shadow-sm"
+                                loading="lazy"
+                            />
+                            <figcaption className="text-xs text-gray-400">
+                                {isJP ? '関連ノートを選んでMixに渡す' : 'Pick related notes and send them to Mix'}
+                            </figcaption>
+                        </figure>
+                    </section>
+
+                    {/* Section 4: Mix */}
+                    <section>
+                        <h3 className="text-lg font-bold text-primary mb-3">
+                            {isJP ? '✨ Mix (AI合成)' : '✨ Mix (AI Synthesis)'}
+                        </h3>
+                        <div className="text-gray-600 leading-relaxed space-y-3 mb-4">
+                            {isJP ? (
+                                <>
+                                    <p>
+                                        複数のノートやアイデアを組み合わせて、<b>新しい洞察</b>を生み出す機能です。
+                                        右上のMixボタンから実行し、選択したノートと現在開いているノートを材料にして合成します。
+                                    </p>
+                                    <p>
+                                        もし選択がない場合でも、現在のノートだけでMixできます。
+                                    </p>
+                                    <p>
+                                        上部のCategoryは生成のトーンに影響します（Memo / Blog / Qiita / Twitter）。
+                                        Mix結果はそのまま新規ノートとして保存できます。
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <p>
+                                        Mix combines multiple notes or ideas to create <b>new insights</b>.
+                                        Run it from the Mix button in the top bar to synthesize selected notes plus the one you’re currently editing.
+                                    </p>
+                                    <p>
+                                        If nothing is selected, Mix uses the current note alone.
+                                    </p>
+                                    <p>
+                                        Category sets the output tone (Memo / Blog / Qiita / Twitter).
+                                        You can save the Mix result as a new note.
+                                    </p>
+                                </>
+                            )}
+                        </div>
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-500">
-                            {lang === 'jp' ? (
+                            {isJP ? (
                                 <>
                                     * Mixの出力は、元のノートの言語に合わせて生成されます。<br />
                                     * 内容の書き換えではなく、<b>「化学反応」</b>を起こすことを目的としています。
@@ -88,6 +204,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                 </>
                             )}
                         </div>
+                        <figure className="mt-4 space-y-2">
+                            <img
+                                src={mixResultImg}
+                                alt={isJP ? 'Mix結果の例' : 'Example of a Mix result'}
+                                className="w-full rounded-lg border border-gray-100 shadow-sm"
+                                loading="lazy"
+                            />
+                            <figcaption className="text-xs text-gray-400">
+                                {isJP ? 'Mixの出力を確認して新規ノートとして保存' : 'Review the Mix output and save as a new note'}
+                            </figcaption>
+                        </figure>
                     </section>
 
                 </div>

@@ -55,6 +55,7 @@ export const NoteList: React.FC = () => {
             const docRef = await addDoc(collection(db, "notes"), {
                 userId: user.uid,
                 markdown: "",
+                category: "Memo",
                 updatedAt: serverTimestamp(),
                 createdAt: serverTimestamp()
             });
@@ -118,7 +119,7 @@ export const NoteList: React.FC = () => {
                             </div>
                             <div className="mt-4 pt-3 border-t border-gray-50 flex items-center gap-2 text-xs text-gray-400">
                                 <Calendar size={12} />
-                                {note.updatedAt?.toDate().toLocaleDateString()}
+                                {toDateSafe(note.updatedAt)?.toLocaleDateString()}
                             </div>
                         </div>
                     ))}
@@ -126,4 +127,12 @@ export const NoteList: React.FC = () => {
             )}
         </div>
     );
+};
+
+const toDateSafe = (value: any): Date | undefined => {
+    if (!value) return undefined;
+    if (typeof value.toDate === "function") return value.toDate();
+    if (value instanceof Date) return value;
+    if (typeof value._seconds === "number") return new Date(value._seconds * 1000);
+    return undefined;
 };

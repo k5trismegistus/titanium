@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { Save, HelpCircle, Plus } from 'lucide-react';
-import { MixButton } from '../mix/MixButton';
-import { callMix as mix } from '../../lib/firebase/functions';
+import { HelpCircle, Plus } from 'lucide-react';
 import { useAuth } from '../../lib/firebase/auth';
 import { HelpModal } from './HelpModal';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 
-export const Header: React.FC<{ selectedNoteIds?: string[] }> = ({ selectedNoteIds = [] }) => {
-    const { user, isAllowed } = useAuth();
-    const [isMixing, setIsMixing] = useState(false);
+export const Header: React.FC = () => {
+    const { user } = useAuth();
     const [isHelpOpen, setIsHelpOpen] = useState(false);
-    const { noteId: currentNoteId } = useParams<{ noteId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isDemoRoute = location.pathname === "/demo";
 
     const handleCreateNote = async () => {
         if (!user) return;
@@ -21,6 +19,7 @@ export const Header: React.FC<{ selectedNoteIds?: string[] }> = ({ selectedNoteI
             const docRef = await addDoc(collection(db, "notes"), {
                 userId: user.uid,
                 markdown: "",
+                category: "Memo",
                 updatedAt: serverTimestamp(),
                 createdAt: serverTimestamp()
             });
@@ -28,40 +27,6 @@ export const Header: React.FC<{ selectedNoteIds?: string[] }> = ({ selectedNoteI
         } catch (e) {
             console.error("Failed to create note:", e);
             alert("Failed to create note.");
-        }
-    };
-
-    const [category, setCategory] = useState("Memo");
-
-    const handleMix = async () => {
-        if (!user) return;
-        setIsMixing(true);
-        try {
-            // Mix: Current Note + Selected Notes
-            const targetIds = [...selectedNoteIds];
-            if (currentNoteId) targetIds.push(currentNoteId);
-
-            if (targetIds.length === 0) {
-                alert("Please select at least one note (or be in a note) to mix.");
-                return;
-            }
-
-            const result = await mix({
-                noteIds: targetIds,
-                category: category
-            });
-            const mixedMarkdown = (result.data as any).markdown;
-
-            if (mixedMarkdown) {
-                await navigator.clipboard.writeText(mixedMarkdown);
-                alert(`Mix Complete (${category})! Result copied to clipboard.`);
-            }
-
-        } catch (e) {
-            console.error("Mix failed:", e);
-            alert("Mix failed. See console.");
-        } finally {
-            setIsMixing(false);
         }
     };
 
@@ -79,12 +44,7 @@ export const Header: React.FC<{ selectedNoteIds?: string[] }> = ({ selectedNoteI
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 flex items-center gap-1 mr-2 hidden sm:flex">
-                        <Save size={14} />
-                        Saved
-                    </span>
-
-                    {user && (
+                    {(user || isDemoRoute) && (
                         <button
                             onClick={handleCreateNote}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -102,18 +62,6 @@ export const Header: React.FC<{ selectedNoteIds?: string[] }> = ({ selectedNoteI
                         <HelpCircle size={20} />
                     </button>
 
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="text-sm border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary hidden sm:block outline-none"
-                    >
-                        <option value="Memo">Memo</option>
-                        <option value="Blog">Blog</option>
-                        <option value="Qiita">Qiita</option>
-                        <option value="Twitter">Twitter</option>
-                    </select>
-
-                    <MixButton onClick={handleMix} disabled={isMixing || !isAllowed} />
                 </div>
             </header>
 

@@ -1,10 +1,9 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
-import { VertexAI } from "@google-cloud/vertexai";
-import { projectID } from "firebase-functions/params";
+// VertexAI import removed as it is not used here anymore if we use helper
+import { generateEmbedding } from "./embedding";
 
 // Initialize at runtime to avoid param access during deployment
-const location = "asia-northeast1";
 
 export const onNoteWritten = onDocumentWritten({
     document: "notes/{noteId}",
@@ -24,16 +23,14 @@ export const onNoteWritten = onDocumentWritten({
     if (newData?.embedding && !oldData?.embedding) return;
 
     try {
-        const vertexAI = new VertexAI({ location, project: projectID.value() });
-        const model = vertexAI.getGenerativeModel({ model: "text-embedding-004" });
-
         // Whole‑note embedding
-        const noteResult = await model.embedContent(newMarkdown);
-        const noteEmbedding = noteResult.embedding.values;
+        const noteEmbedding = await generateEmbedding(newMarkdown, undefined, "RETRIEVAL_DOCUMENT");
 
         // Split into sections
         const sectionRegex = /(^#{1,3}\s+.*$)/gm;
         const parts = newMarkdown.split(sectionRegex);
+        console.log(`Markdown split into ${parts.length} parts.`);
+
         const sections: { title: string; content: string }[] = [];
         let currentTitle = "Introduction";
         for (let i = 0; i < parts.length; i++) {
@@ -45,6 +42,7 @@ export const onNoteWritten = onDocumentWritten({
                 sections.push({ title: currentTitle, content: part });
             }
         }
+        console.log(`Parsed ${sections.length} sections from markdown.`);
 
         const sectionsRef = snapshot.after.ref.collection("sections");
         const oldSections = await sectionsRef.get();
@@ -53,18 +51,22 @@ export const onNoteWritten = onDocumentWritten({
 
         // Section embeddings
         const embedPromises = sections.map(async (section, index) => {
-            const result = await model.embedContent(`${section.title}\n${section.content}`);
+            const embedding = await generateEmbedding(`${section.title}\n${section.content}`, section.title, "RETRIEVAL_DOCUMENT");
             return {
                 index,
                 title: section.title,
                 content: section.content,
-                embedding: result.embedding.values
+                embedding: embedding
             };
         });
 
         const embeddingResults = await Promise.all(embedPromises);
+        console.log(`Generated ${embeddingResults.length} section embeddings.`);
         embeddingResults.forEach((res) => {
-            if (!res.embedding) return;
+            if (!res.embedding) {
+                console.log(`Section ${res.index} has no embedding`);
+                return;
+            }
             const docRef = sectionsRef.doc(`section_${res.index}`);
             batch.set(docRef, {
                 title: res.title,

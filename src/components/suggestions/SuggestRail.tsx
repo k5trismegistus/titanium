@@ -5,20 +5,46 @@ import { db } from '../../lib/firebase/config';
 import { searchRelated } from '../../lib/firebase/functions';
 import { useAuth } from '../../lib/firebase/auth';
 import { useParams } from 'react-router-dom';
+import { useEditorContext } from '../../context/EditorContext';
+
+export type DemoSuggestion = {
+    id: string;
+    markdown: string;
+    updatedAt?: Date;
+    score?: number;
+};
+
+export type DemoSuggestionMap = Record<string, DemoSuggestion[]>;
 
 interface SuggestRailProps {
     selectedNoteIds: string[];
     onToggleNote: (id: string) => void;
+    demoSuggestions?: DemoSuggestionMap;
 }
 
-export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onToggleNote }) => {
+export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onToggleNote, demoSuggestions }) => {
     const { user } = useAuth();
     const { noteId: currentId } = useParams<{ noteId: string }>();
-    const [isOpen, setIsOpen] = useState(true);
+    const { activeSectionText, activeSectionHeading } = useEditorContext();
+    const [isOpen, setIsOpen] = useState(() => {
+        if (typeof window === "undefined") return true;
+        return window.innerWidth >= 1024;
+    });
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        if (demoSuggestions) {
+            const key = activeSectionHeading || "Introduction";
+            const nextSuggestions = demoSuggestions[key]
+                || demoSuggestions.Introduction
+                || demoSuggestions.default
+                || [];
+            setSuggestions(nextSuggestions);
+            setLoading(false);
+            return;
+        }
+
         if (!user) return;
 
         const fetchSuggestions = async () => {
@@ -33,17 +59,22 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
                         limit(10)
                     );
                     const snap = await getDocs(q);
-                    const notes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    const notes = snap.docs.map(d => ({
+                        id: d.id,
+                        ...d.data(),
+                        updatedAt: toDateSafe(d.data().updatedAt)
+                    }));
                     setSuggestions(notes);
                     return;
                 }
 
                 // Call Vector Search
-                const result = await searchRelated({ noteId: currentId });
+                const queryText = activeSectionText && activeSectionText.length > 10 ? activeSectionText : undefined;
+                const result = await searchRelated({ noteId: currentId, queryText });
                 const relatedNotes = result.data.results.map((r: any) => ({
                     id: r.id,
                     markdown: r.markdown,
-                    updatedAt: r.date ? new Date(r.date._seconds * 1000) : new Date(), // Handle Firestore timestamp shim
+                    updatedAt: toDateSafe(r.date),
                     score: r.score
                 }));
 
@@ -55,15 +86,17 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
             }
         };
 
-        fetchSuggestions();
-    }, [user, currentId]);
+        const timer = setTimeout(fetchSuggestions, 600);
+        return () => clearTimeout(timer);
+    }, [user, currentId, activeSectionText, activeSectionHeading, demoSuggestions]);
 
     return (
         <div
             className={`
-        fixed right-0 top-14 bottom-0 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out z-20
-        ${isOpen ? 'w-80 translate-x-0' : 'w-12 translate-x-0'}
+        fixed right-0 bottom-0 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out z-30
+        ${isOpen ? 'w-80' : 'w-12'}
       `}
+            style={{ top: "calc(var(--global-header-height, 3.5rem) + var(--editor-header-height, 0px))" }}
         >
             <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -89,7 +122,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
                                 <SuggestItem
                                     key={note.id}
                                     title={note.markdown.slice(0, 50) || "Untitled Note"}
-                                    date={note.updatedAt?.toDate()}
+                                    date={note.updatedAt}
                                     checked={selectedNoteIds.includes(note.id)}
                                     onToggle={() => onToggleNote(note.id)}
                                     score={note.score}
@@ -157,3 +190,11 @@ const SuggestItem = ({
         </div>
     </div>
 );
+
+const toDateSafe = (value: any): Date | undefined => {
+    if (!value) return undefined;
+    if (typeof value.toDate === "function") return value.toDate();
+    if (value instanceof Date) return value;
+    if (typeof value._seconds === "number") return new Date(value._seconds * 1000);
+    return undefined;
+};
