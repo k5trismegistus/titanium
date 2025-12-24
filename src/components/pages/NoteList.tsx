@@ -4,6 +4,7 @@ import { Plus, FileText, Calendar } from 'lucide-react';
 import { collection, query, where, getDocs, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { useAuth } from '../../lib/firebase/auth';
+import { useUserCategories } from '../../hooks/useUserCategories';
 
 interface Note {
     id: string;
@@ -16,6 +17,8 @@ export const NoteList: React.FC = () => {
     const navigate = useNavigate();
     const [notes, setNotes] = useState<Note[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { categories } = useUserCategories();
+    const defaultCategory = categories[0] || "Memo";
 
     useEffect(() => {
         // If user is null, it means AuthProvider finished loading but no user was found (Auth failed)
@@ -55,7 +58,7 @@ export const NoteList: React.FC = () => {
             const docRef = await addDoc(collection(db, "notes"), {
                 userId: user.uid,
                 markdown: "",
-                category: "Memo",
+                category: defaultCategory,
                 updatedAt: serverTimestamp(),
                 createdAt: serverTimestamp()
             });

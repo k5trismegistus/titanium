@@ -5,6 +5,7 @@ import { HelpModal } from './HelpModal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
+import { useUserCategories } from '../../hooks/useUserCategories';
 
 export const Header: React.FC = () => {
     const { user } = useAuth();
@@ -12,6 +13,8 @@ export const Header: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isDemoRoute = location.pathname === "/demo";
+    const { categories } = useUserCategories();
+    const defaultCategory = categories[0] || "Memo";
 
     const handleCreateNote = async () => {
         if (!user) return;
@@ -19,7 +22,7 @@ export const Header: React.FC = () => {
             const docRef = await addDoc(collection(db, "notes"), {
                 userId: user.uid,
                 markdown: "",
-                category: "Memo",
+                category: defaultCategory,
                 updatedAt: serverTimestamp(),
                 createdAt: serverTimestamp()
             });

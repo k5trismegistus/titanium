@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { MixButton } from '../mix/MixButton';
 
@@ -8,6 +8,8 @@ type EditorHeaderProps = {
     saveStatus: SaveStatus;
     category: string;
     setCategory: (next: string) => void;
+    categories: string[];
+    onAddCategory: (next: string) => void;
     onMix: () => void;
     isMixing: boolean;
     isMixAllowed: boolean;
@@ -17,26 +19,80 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
     saveStatus,
     category,
     setCategory,
+    categories,
+    onAddCategory,
     onMix,
     isMixing,
     isMixAllowed
-}) => (
-    <div className="flex h-12 items-center justify-end gap-3 px-4">
-        <SaveIndicator status={saveStatus} />
-        <label className="text-xs text-gray-400">Category</label>
-        <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="text-sm border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none"
-        >
-            <option value="Memo">Memo</option>
-            <option value="Blog">Blog</option>
-            <option value="Qiita">Qiita</option>
-            <option value="Twitter">Twitter</option>
-        </select>
-        <MixButton onClick={onMix} disabled={isMixing || !isMixAllowed} />
-    </div>
-);
+}) => {
+    const [draftCategory, setDraftCategory] = useState(category);
+    const trimmedCategory = category.trim();
+    const options = categories.filter((item) => item.trim().length > 0);
+    const hasCurrent = trimmedCategory.length > 0 &&
+        options.some((item) => item.toLowerCase() === trimmedCategory.toLowerCase());
+    const resolvedOptions = hasCurrent || trimmedCategory.length === 0
+        ? options
+        : [trimmedCategory, ...options];
+
+    useEffect(() => {
+        setDraftCategory(category);
+    }, [category]);
+
+    const handleCommit = () => {
+        const nextValue = draftCategory.trim();
+        if (!nextValue) {
+            const fallback = trimmedCategory || resolvedOptions[0] || "";
+            if (fallback && fallback !== category) {
+                setCategory(fallback);
+            }
+            setDraftCategory(fallback);
+            return;
+        }
+
+        const match = resolvedOptions.find(
+            (item) => item.toLowerCase() === nextValue.toLowerCase()
+        );
+        if (match) {
+            if (match !== category) {
+                setCategory(match);
+            }
+            setDraftCategory(match);
+            return;
+        }
+
+        setCategory(nextValue);
+        setDraftCategory(nextValue);
+        onAddCategory(nextValue);
+    };
+
+    return (
+        <div className="flex h-12 items-center justify-end gap-3 px-4">
+            <SaveIndicator status={saveStatus} />
+            <label className="text-xs text-gray-400">Category</label>
+            <div className="relative">
+                <input
+                    list="category-options"
+                    value={draftCategory}
+                    onChange={(e) => setDraftCategory(e.target.value)}
+                    onBlur={handleCommit}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                        }
+                    }}
+                    placeholder="Select or type"
+                    className="text-sm border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none"
+                />
+                <datalist id="category-options">
+                    {resolvedOptions.map((item) => (
+                        <option key={item} value={item} />
+                    ))}
+                </datalist>
+            </div>
+            <MixButton onClick={onMix} disabled={isMixing || !isMixAllowed} />
+        </div>
+    );
+};
 
 const SaveIndicator = ({ status }: { status: SaveStatus }) => {
     const label = status === "saving" ? "Saving..." : status === "dirty" ? "Unsaved" : "Saved";

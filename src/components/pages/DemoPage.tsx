@@ -6,7 +6,7 @@ import { EditorHeader, SaveStatus } from '../editor/EditorHeader';
 import { useEditorContext } from '../../context/EditorContext';
 import type { DemoSuggestion, DemoSuggestionMap } from '../suggestions/SuggestRail';
 
-type Category = 'Memo' | 'Blog' | 'Qiita' | 'Twitter';
+type Category = string;
 
 type DemoSectionState = {
     heading: string;
@@ -133,9 +133,12 @@ const DEMO_SUGGESTIONS: DemoSuggestionMap = {
     ]
 };
 
+const DEFAULT_CATEGORIES = ["Memo", "Blog", "Qiita", "Twitter"];
+
 export const DemoPage: React.FC = () => {
     const [content, setContent] = useState(DEMO_CONTENT);
-    const [category, setCategory] = useState<Category>('Memo');
+    const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+    const [category, setCategory] = useState<Category>(DEFAULT_CATEGORIES[0]);
     const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
     const [isMixing, setIsMixing] = useState(false);
     const [mixResult, setMixResult] = useState('');
@@ -182,6 +185,17 @@ export const DemoPage: React.FC = () => {
         setMixResult('');
     };
 
+    const handleAddCategory = (next: string) => {
+        const trimmed = next.trim();
+        if (!trimmed) return;
+        setCategories((prev) => {
+            if (prev.some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
+                return prev;
+            }
+            return [...prev, trimmed];
+        });
+    };
+
     const saveStatus: SaveStatus = 'saved';
 
     return (
@@ -191,7 +205,9 @@ export const DemoPage: React.FC = () => {
                 <EditorHeader
                     saveStatus={saveStatus}
                     category={category}
-                    setCategory={(next) => setCategory(next as Category)}
+                    setCategory={setCategory}
+                    categories={categories}
+                    onAddCategory={handleAddCategory}
                     onMix={handleMix}
                     isMixing={isMixing}
                     isMixAllowed={true}
@@ -268,6 +284,7 @@ const buildDemoMixMarkdown = (
     notes: DemoSuggestion[],
     category: Category
 ) => {
+    const normalizedCategory = category.trim().toLowerCase();
     const heading = section.heading || 'Introduction';
     const text = section.text.split('\n').slice(1).join(' ').trim();
     const snippet = text ? text.slice(0, 160) : '今書いているセクションの要点を整理する。';
@@ -275,7 +292,7 @@ const buildDemoMixMarkdown = (
         ? notes.map(note => `- ${note.markdown.slice(0, 56)}`).join('\n')
         : '- （選択なし）';
 
-    if (category === 'Twitter') {
+    if (normalizedCategory === 'twitter') {
         return [
             `1/ ${heading}を起点に、思考の流れを止めないノート体験を設計する。`,
             `2/ ${snippet}`,
@@ -283,14 +300,14 @@ const buildDemoMixMarkdown = (
         ].join('\n');
     }
 
-    if (category === 'Qiita') {
+    if (normalizedCategory === 'qiita') {
         return `# ${heading}を起点にしたMixのまとめ\n\n` +
             `## 課題\n${snippet}\n\n` +
             `## アプローチ\n文脈で関連ノートを引き寄せ、Mixで新しい視点を生成する。\n\n` +
             `## 参考にしたノート\n${sources}`;
     }
 
-    if (category === 'Blog') {
+    if (normalizedCategory === 'blog') {
         return `# ${heading}から広げるアイデア\n\n` +
             `${snippet}\n\n` +
             `## なぜ今これか\n今の文脈で関連ノートを呼び出すことで、思考の分断を防げる。\n\n` +

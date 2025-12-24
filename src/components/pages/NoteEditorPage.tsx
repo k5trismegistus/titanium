@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../layout/MainLayout';
 import { MainEditor } from '../editor/MainEditor';
 import { useSync } from '../../hooks/useSync';
+import { useUserCategories } from '../../hooks/useUserCategories';
 import { EditorHeader, SaveStatus } from '../editor/EditorHeader';
 import { useAuth } from '../../lib/firebase/auth';
 import { callMix as mix } from '../../lib/firebase/functions';
@@ -21,9 +22,17 @@ export const NoteEditorPage: React.FC = () => {
     const [isMixModalOpen, setIsMixModalOpen] = useState(false);
     const [isSavingMix, setIsSavingMix] = useState(false);
 
-    const { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory } = useSync(resolvedNoteId, "");
+    const { categories, addCategory, isLoading: isCategoriesLoading } = useUserCategories();
+    const defaultCategory = categories[0] || "Memo";
+    const { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory } = useSync(resolvedNoteId, "", defaultCategory);
     const hasUnsavedChanges = content !== lastSavedContent || category !== lastSavedCategory;
     const saveStatus: SaveStatus = isSaving ? "saving" : hasUnsavedChanges ? "dirty" : "saved";
+
+    useEffect(() => {
+        if (isCategoriesLoading) return;
+        if (!lastSavedCategory) return;
+        void addCategory(lastSavedCategory);
+    }, [lastSavedCategory, addCategory, isCategoriesLoading]);
 
     const toggleNote = (id: string) => {
         setSelectedNoteIds(prev =>
@@ -93,6 +102,10 @@ export const NoteEditorPage: React.FC = () => {
                         saveStatus={saveStatus}
                         category={category}
                         setCategory={setCategory}
+                        categories={categories}
+                        onAddCategory={(next) => {
+                            void addCategory(next);
+                        }}
                         onMix={handleMix}
                         isMixing={isMixing}
                         isMixAllowed={!!isAllowed}

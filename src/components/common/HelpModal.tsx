@@ -171,7 +171,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                         もし選択がない場合でも、現在のノートだけでMixできます。
                                     </p>
                                     <p>
-                                        上部のCategoryは生成のトーンに影響します（Memo / Blog / Qiita / Twitter）。
+                                        上部のCategoryは生成のトーンに影響します。
+                                        ドロップダウンから新しいCategoryを追加できます。
                                         Mix結果はそのまま新規ノートとして保存できます。
                                     </p>
                                 </>
@@ -185,7 +186,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                         If nothing is selected, Mix uses the current note alone.
                                     </p>
                                     <p>
-                                        Category sets the output tone (Memo / Blog / Qiita / Twitter).
+                                        Category sets the output tone.
+                                        You can add new categories from the dropdown.
                                         You can save the Mix result as a new note.
                                     </p>
                                 </>

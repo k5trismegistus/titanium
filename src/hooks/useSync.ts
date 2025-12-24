@@ -5,7 +5,7 @@ import { useAuth } from "../lib/firebase/auth";
 
 // MVP Strategy: Single persistent note for the user (Scratchpad)
 // In a full app, this would take a noteId argument.
-export const useSync = (noteId: string, initialContent: string, initialCategory: string = "Memo") => {
+export const useSync = (noteId: string, initialContent: string, initialCategory: string = "") => {
     const { user } = useAuth();
     const [content, setContent] = useState(initialContent);
     const [isSaving, setIsSaving] = useState(false);

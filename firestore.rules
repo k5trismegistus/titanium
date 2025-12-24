@@ -46,5 +46,22 @@ service cloud.firestore {
       // Manual console edit only.
       allow write: if false; 
     }
+
+    // Users: per-user profile data (e.g. category list)
+    match /users/{userId} {
+      allow read: if request.auth != null &&
+                     isAllowed() &&
+                     request.auth.uid == userId;
+
+      allow create: if request.auth != null &&
+                       isAllowed() &&
+                       request.auth.uid == userId;
+
+      allow update: if request.auth != null &&
+                       isAllowed() &&
+                       request.auth.uid == userId;
+
+      allow delete: if false;
+    }
   }
 }

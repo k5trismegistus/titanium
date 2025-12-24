@@ -21,7 +21,6 @@
 
 ```
 users
-categories
 notes
 sections
 ```
@@ -31,33 +30,14 @@ sections
 ```tsx
 users/{userId} {
   createdAt
+  updatedAt
+  categories: string[] // 例: ["Qiita", "広報ブログ"]
 }
 
 ```
 
 - Auth用
-- 現時点では最小構成
-
----
-
-## categories（アウトプット先）
-
-```tsx
-categories/{categoryId} {
-userId:string
-name:string// 例: "Qiita", "広報ブログ"
-description?:string
-stylePrompt?:string// Mix時に使用する文体・構成指示
-  createdAt
-}
-
-```
-
-### 設計意図
-
-- 内容分類ではなく「アウトプット先」
-- Mix機能の品質向上が主目的
-- 正規化する（string直書きはしない）
+- カテゴリはユーザーごとに保持する
 
 ---
 
@@ -67,7 +47,7 @@ stylePrompt?:string// Mix時に使用する文体・構成指示
 notes/{noteId} {
 userId:string
 title:string
-categoryId:string
+category:string
 markdown:string// Markdown全文（唯一の真実）
 noteEmbedding:number[]// ノート全体Embedding（保存ごとに更新）
 sectionIndex: [
@@ -89,6 +69,7 @@ order:number
 - 差分管理はしない（全文上書き）
 - Mixで生成されたノートも通常ノートと同一扱い
 - 履歴管理・参照関係は持たない
+- category は users.categories から選択する
 
 ---
 
