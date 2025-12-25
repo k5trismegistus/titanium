@@ -11,6 +11,11 @@ interface SearchRequest {
   queryText?: string;
 }
 
+interface SearchNotesRequest {
+  queryText: string;
+  limit?: number;
+}
+
 const toEmbeddingArray = (embedding: unknown): number[] => {
   if (!embedding) return [];
   if (Array.isArray(embedding)) return embedding;
@@ -68,6 +73,11 @@ const fetchNoteVectorResults = async (
   });
 
   return buildNoteResults(filteredDocs.slice(0, limitVal));
+};
+
+const isAllowedUser = async (uid: string) => {
+  const userDoc = await db.collection("allowedUsers").doc(uid).get();
+  return userDoc.exists && userDoc.data()?.allowed === true;
 };
 
 export const searchRelated = onCall<SearchRequest>(
@@ -162,6 +172,63 @@ export const searchRelated = onCall<SearchRequest>(
       console.error("searchRelated failed:", e);
       const code = e?.code ? String(e.code) : "unknown";
       const message = e?.message || "searchRelated failed";
+      throw new HttpsError("internal", `${message} (code=${code})`);
+    }
+  }
+);
+
+export const searchNotes = onCall<SearchNotesRequest>(
+  {
+    region: "asia-northeast1",
+    memory: "512MiB",
+  },
+  async (request) => {
+    try {
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "User must be logged in.");
+      }
+
+      const uid = request.auth.uid;
+      if (!(await isAllowedUser(uid))) {
+        throw new HttpsError("permission-denied", "User is not in the whitelist.");
+      }
+
+      const safeQueryText = typeof request.data.queryText === "string" ? request.data.queryText.trim() : "";
+      if (safeQueryText.length < MIN_QUERY_TEXT_LENGTH) {
+        return { results: [] };
+      }
+
+      const limitVal = Math.min(request.data.limit ?? 5, 5);
+      if (limitVal <= 0) {
+        return { results: [] };
+      }
+
+      let targetEmbedding: number[] = [];
+      try {
+        const embedding = await generateEmbedding(
+          safeQueryText,
+          undefined,
+          "RETRIEVAL_QUERY"
+        );
+        if (embedding && isValidEmbedding(embedding)) {
+          targetEmbedding = embedding;
+        } else {
+          console.error(`Failed to generate valid embedding for searchNotes (len=${embedding?.length ?? 0})`);
+        }
+      } catch (e) {
+        console.error("Embedding generation failed for searchNotes:", e);
+      }
+
+      if (targetEmbedding.length === 0) {
+        return { results: [] };
+      }
+
+      const results = await fetchNoteVectorResults(uid, targetEmbedding, limitVal);
+      return { results };
+    } catch (e: any) {
+      console.error("searchNotes failed:", e);
+      const code = e?.code ? String(e.code) : "unknown";
+      const message = e?.message || "searchNotes failed";
       throw new HttpsError("internal", `${message} (code=${code})`);
     }
   }

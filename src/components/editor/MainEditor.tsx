@@ -103,7 +103,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
     }, [content, cursorIndex, setActiveSection]);
 
     return (
-        <div className="relative w-full max-w-2xl mx-auto min-h-[calc(100vh-10rem)] bg-white pt-4">
+        <div className="relative w-full max-w-2xl mx-auto min-h-[calc(100dvh-10rem)] bg-white pt-4">
             {!readOnly && (
                 <>
                     {/* Floating Toolbar (Mobile only) */}

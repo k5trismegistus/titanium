@@ -13,6 +13,7 @@ interface MixRequest {
   noteIds: string[];
   stylePrompt?: string;
   category?: string;
+  baseNoteId?: string;
 }
 
 export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB", timeoutSeconds: 60 }, async (request) => {
@@ -28,7 +29,7 @@ export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB
     throw new HttpsError("permission-denied", "User is not in the whitelist.");
   }
 
-  const { noteIds, stylePrompt, category } = request.data;
+  const { noteIds, stylePrompt, category, baseNoteId } = request.data;
   if (!noteIds || noteIds.length === 0) {
     throw new HttpsError("invalid-argument", "At least one note ID is required to mix.");
   }
@@ -53,11 +54,18 @@ export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB
     return { markdown: "" };
   }
 
+  const primaryNote =
+    (baseNoteId ? notesData.find((note) => note.id === baseNoteId) : undefined) || notesData[0];
+
   // 3. Vertex AI Logic (using @google-cloud/vertexai)
   try {
     const project = projectID.value();
     let text = "";
     let lastError: any = null;
+
+    const primaryNoteBlock = primaryNote
+      ? `--- Primary Note (language anchor): ${primaryNote.id} ---\n${primaryNote.markdown}`
+      : "";
 
     const prompt = `
       You are an expert editor and writer.
@@ -66,19 +74,27 @@ export const mix = onCall<MixRequest>({ region: "asia-northeast1", memory: "1GiB
       Target Audience/Format: ${category || "General Note / Memo"}
 
       Instructions:
-      - Synthesize the information. Do not just list it.
+      - Create a brand-new note made ONLY of new ideas generated from the inputs.
+      - Do NOT summarize, paraphrase, or restate the notes.
+      - Do NOT create a chapter-by-chapter recap of the inputs.
+      - Force synergy: extract latent signals and combine them into novel concepts that do not appear in any single note.
+      - Every section must be a fresh insight, hypothesis, framework, or proposal that could not exist without mixing the notes.
+      - Do not mention the source notes or list their points.
       - Use the "Target Audience/Format" to decide the tone and structure.
         (e.g. if 'Qiita': technical, code-focused. if 'Blog': engaging, personal. if 'Memo': concise, bullet points.)
       - If there are conflicts, mention them.
       - Output in Markdown.
       - Do not use Markdown emphasis or decorations such as **, __, *, or _ for emphasis.
+      - Language lock: Detect the language of the Primary Note and write ONLY in that language. Never switch languages.
+
+      ${primaryNoteBlock}
 
       Source Notes:
       ${notesData.map(n => `--- Note: ${n.id} ---\n${n.markdown}`).join("\n\n")}
 
-      Goal: Create a new insight, summary, or article that bridges the concepts found in the input notes.
+      Goal: Create a new insight or article that bridges and recombines the concepts found in the input notes.
       Style: Professional, clear, and insightful.
-      Language: The output MUST be in the dominant language of the inputs.
+      Language: Strictly match the Primary Note's language. Do not include translations or bilingual output.
       ${stylePrompt ? `User Direction: ${stylePrompt}` : ""}
 
       Output:

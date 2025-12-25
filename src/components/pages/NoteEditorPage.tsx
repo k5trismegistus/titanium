@@ -10,13 +10,14 @@ import { callMix as mix } from '../../lib/firebase/functions';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { X } from 'lucide-react';
+import type { MixSelectableNote } from '../suggestions/SuggestRail';
 
 export const NoteEditorPage: React.FC = () => {
     const { noteId } = useParams<{ noteId: string }>();
     const resolvedNoteId = noteId || "scratchpad";
     const { user, isAllowed } = useAuth();
     const navigate = useNavigate();
-    const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
+    const [selectedNotes, setSelectedNotes] = useState<MixSelectableNote[]>([]);
     const [isMixing, setIsMixing] = useState(false);
     const [mixResult, setMixResult] = useState("");
     const [isMixModalOpen, setIsMixModalOpen] = useState(false);
@@ -24,6 +25,8 @@ export const NoteEditorPage: React.FC = () => {
 
     const { categories, addCategory, isLoading: isCategoriesLoading } = useUserCategories();
     const defaultCategory = categories[0] || "Memo";
+    const [mixCategory, setMixCategory] = useState(defaultCategory);
+    const [mixCategoryTouched, setMixCategoryTouched] = useState(false);
     const { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory } = useSync(resolvedNoteId, "", defaultCategory);
     const hasUnsavedChanges = content !== lastSavedContent || category !== lastSavedCategory;
     const saveStatus: SaveStatus = isSaving ? "saving" : hasUnsavedChanges ? "dirty" : "saved";
@@ -34,9 +37,21 @@ export const NoteEditorPage: React.FC = () => {
         void addCategory(lastSavedCategory);
     }, [lastSavedCategory, addCategory, isCategoriesLoading]);
 
-    const toggleNote = (id: string) => {
-        setSelectedNoteIds(prev =>
-            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    useEffect(() => {
+        setMixCategoryTouched(false);
+    }, [resolvedNoteId]);
+
+    useEffect(() => {
+        if (!mixCategoryTouched) {
+            setMixCategory(category || defaultCategory);
+        }
+    }, [category, defaultCategory, mixCategoryTouched]);
+
+    const toggleNote = (note: MixSelectableNote) => {
+        setSelectedNotes(prev =>
+            prev.some((item) => item.id === note.id)
+                ? prev.filter(item => item.id !== note.id)
+                : [...prev, note]
         );
     };
 
@@ -44,7 +59,7 @@ export const NoteEditorPage: React.FC = () => {
         if (!user) return;
         setIsMixing(true);
         try {
-            const targetIds = [...selectedNoteIds];
+            const targetIds = selectedNotes.map((note) => note.id);
             const resolvedId = resolvedNoteId === "scratchpad" ? `scratchpad-${user.uid}` : resolvedNoteId;
             if (resolvedId) targetIds.push(resolvedId);
 
@@ -56,7 +71,8 @@ export const NoteEditorPage: React.FC = () => {
 
             const result = await mix({
                 noteIds: uniqueIds,
-                category: category
+                category: mixCategory,
+                baseNoteId: resolvedId
             });
             const mixedMarkdown = (result.data as any).markdown;
 
@@ -79,7 +95,7 @@ export const NoteEditorPage: React.FC = () => {
             const docRef = await addDoc(collection(db, "notes"), {
                 userId: user.uid,
                 markdown: mixResult,
-                category: category,
+                category: mixCategory,
                 updatedAt: serverTimestamp(),
                 createdAt: serverTimestamp()
             });
@@ -106,13 +122,22 @@ export const NoteEditorPage: React.FC = () => {
                         onAddCategory={(next) => {
                             void addCategory(next);
                         }}
-                        onMix={handleMix}
-                        isMixing={isMixing}
-                        isMixAllowed={!!isAllowed}
                     />
                 }
-                selectedNoteIds={selectedNoteIds}
+                selectedNotes={selectedNotes}
                 onToggleNote={toggleNote}
+                mixCategory={mixCategory}
+                onChangeMixCategory={(next) => {
+                    setMixCategoryTouched(true);
+                    setMixCategory(next);
+                }}
+                categories={categories}
+                onAddCategory={(next) => {
+                    void addCategory(next);
+                }}
+                onMix={handleMix}
+                isMixing={isMixing}
+                isMixAllowed={!!isAllowed}
             >
                 <MainEditor content={content} setContent={setContent} />
             </MainLayout>
@@ -130,7 +155,7 @@ export const NoteEditorPage: React.FC = () => {
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="max-h-[60vh] overflow-y-auto px-5 py-4 text-sm text-gray-700 whitespace-pre-wrap">
+                        <div className="max-h-[60dvh] overflow-y-auto px-5 py-4 text-sm text-gray-700 whitespace-pre-wrap">
                             {mixResult}
                         </div>
                         <div className="flex items-center justify-end gap-2 border-t border-muted px-5 py-3">

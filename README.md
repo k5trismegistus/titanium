@@ -5,6 +5,8 @@ A concept "Thought-Support" note-taking application powered by **Gemini 2.0 Pro*
 ## Features
 - **Clean Interface**: Distraction-free Markdown editor.
 - **Mix**: Synthesize multiple notes into new insights using Gemini 2.0 Pro.
+- **Quick Word**: Register a term to auto-generate an explainer note for future suggestions and Mix.
+- **Vector Search**: Semantic search across notes with top 5 results.
 - **Security**: Strict whitelist-based access control.
 - **Sync**: Real-time autosave to Firestore.
 

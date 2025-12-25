@@ -62,12 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     if (loading && !isDemoRoute) {
-        return <div className="h-screen w-screen flex items-center justify-center text-primary">Loading...</div>;
+        return <div className="h-[100dvh] w-screen flex items-center justify-center text-primary">Loading...</div>;
     }
 
     if (!user && !isDemoRoute) {
         return (
-            <div className="min-h-screen w-screen bg-gradient-to-br from-emerald-50 via-white to-slate-50 text-gray-800">
+            <div className="min-h-[100dvh] w-screen bg-gradient-to-br from-emerald-50 via-white to-slate-50 text-gray-800">
                 <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:py-16">
                     <div className="flex items-center justify-end">
                         <LanguageToggle isJP={isJP} onToggle={() => setLang(l => (l === "jp" ? "en" : "jp"))} />
@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (isAllowed === false && !isDemoRoute) {
         return (
-            <div className="min-h-screen w-screen flex items-center justify-center bg-gray-50 text-gray-700 p-6">
+            <div className="min-h-[100dvh] w-screen flex items-center justify-center bg-gray-50 text-gray-700 p-6">
                 <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-xl border border-gray-100 text-center">
                     <div className="flex justify-end">
                         <LanguageToggle isJP={isJP} onToggle={() => setLang(l => (l === "jp" ? "en" : "jp"))} />

@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { MainEditor } from '../editor/MainEditor';
 import { EditorHeader, SaveStatus } from '../editor/EditorHeader';
 import { useEditorContext } from '../../context/EditorContext';
-import type { DemoSuggestion, DemoSuggestionMap } from '../suggestions/SuggestRail';
+import type { DemoSuggestionMap, MixSelectableNote } from '../suggestions/SuggestRail';
 
 type Category = string;
 
@@ -139,27 +139,19 @@ export const DemoPage: React.FC = () => {
     const [content, setContent] = useState(DEMO_CONTENT);
     const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
     const [category, setCategory] = useState<Category>(DEFAULT_CATEGORIES[0]);
-    const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
+    const [mixCategory, setMixCategory] = useState<Category>(DEFAULT_CATEGORIES[0]);
+    const [mixCategoryTouched, setMixCategoryTouched] = useState(false);
+    const [selectedNotes, setSelectedNotes] = useState<MixSelectableNote[]>([]);
     const [isMixing, setIsMixing] = useState(false);
     const [mixResult, setMixResult] = useState('');
     const [isMixModalOpen, setIsMixModalOpen] = useState(false);
     const [activeSection, setActiveSection] = useState<DemoSectionState>({ heading: '', text: '' });
 
-    const demoNoteIndex = useMemo(() => {
-        const index = new Map<string, DemoSuggestion>();
-        Object.values(DEMO_SUGGESTIONS).forEach(list => {
-            list.forEach(note => index.set(note.id, note));
-        });
-        return index;
-    }, []);
-
-    const selectedNotes = useMemo(() => (
-        selectedNoteIds.map(id => demoNoteIndex.get(id)).filter(Boolean) as DemoSuggestion[]
-    ), [selectedNoteIds, demoNoteIndex]);
-
-    const handleToggleNote = (id: string) => {
-        setSelectedNoteIds(prev => (
-            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    const handleToggleNote = (note: MixSelectableNote) => {
+        setSelectedNotes(prev => (
+            prev.some((item) => item.id === note.id)
+                ? prev.filter(item => item.id !== note.id)
+                : [...prev, note]
         ));
     };
 
@@ -169,7 +161,7 @@ export const DemoPage: React.FC = () => {
 
     const handleMix = () => {
         setIsMixing(true);
-        const nextMarkdown = buildDemoMixMarkdown(activeSection, selectedNotes, category);
+        const nextMarkdown = buildDemoMixMarkdown(activeSection, selectedNotes, mixCategory);
         setTimeout(() => {
             setMixResult(nextMarkdown);
             setIsMixModalOpen(true);
@@ -180,7 +172,7 @@ export const DemoPage: React.FC = () => {
     const handleSaveMix = () => {
         if (!mixResult) return;
         setContent(mixResult);
-        setSelectedNoteIds([]);
+        setSelectedNotes([]);
         setIsMixModalOpen(false);
         setMixResult('');
     };
@@ -196,6 +188,12 @@ export const DemoPage: React.FC = () => {
         });
     };
 
+    useEffect(() => {
+        if (!mixCategoryTouched) {
+            setMixCategory(category);
+        }
+    }, [category, mixCategoryTouched]);
+
     const saveStatus: SaveStatus = 'saved';
 
     return (
@@ -208,14 +206,23 @@ export const DemoPage: React.FC = () => {
                     setCategory={setCategory}
                     categories={categories}
                     onAddCategory={handleAddCategory}
-                    onMix={handleMix}
-                    isMixing={isMixing}
-                    isMixAllowed={true}
                 />
                 }
-                selectedNoteIds={selectedNoteIds}
+                selectedNotes={selectedNotes}
                 onToggleNote={handleToggleNote}
                 demoSuggestions={DEMO_SUGGESTIONS}
+                mixCategory={mixCategory}
+                onChangeMixCategory={(next) => {
+                    setMixCategoryTouched(true);
+                    setMixCategory(next as Category);
+                }}
+                categories={categories}
+                onAddCategory={(next) => {
+                    handleAddCategory(next);
+                }}
+                onMix={handleMix}
+                isMixing={isMixing}
+                isMixAllowed={true}
             >
                 <DemoEditor content={content} setContent={setContent} onSectionChange={handleSectionChange} />
             </MainLayout>
@@ -234,7 +241,7 @@ export const DemoPage: React.FC = () => {
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="max-h-[60vh] overflow-y-auto px-5 py-4 text-sm text-gray-700 whitespace-pre-wrap">
+                        <div className="max-h-[60dvh] overflow-y-auto px-5 py-4 text-sm text-gray-700 whitespace-pre-wrap">
                             {mixResult}
                         </div>
                         <div className="flex items-center justify-end gap-2 border-t border-muted px-5 py-3">
@@ -281,7 +288,7 @@ const DemoEditor = ({
 
 const buildDemoMixMarkdown = (
     section: DemoSectionState,
-    notes: DemoSuggestion[],
+    notes: MixSelectableNote[],
     category: Category
 ) => {
     const normalizedCategory = category.trim().toLowerCase();

@@ -1,21 +1,42 @@
 import React from 'react';
 import { SuggestRail } from '../suggestions/SuggestRail';
 import type { DemoSuggestionMap } from '../suggestions/SuggestRail';
+import type { MixSelectableNote } from '../suggestions/SuggestRail';
 import { EditorProvider } from '../../context/EditorContext';
 
 type MainLayoutProps = {
     children: React.ReactNode;
     editorHeader?: React.ReactNode;
-    selectedNoteIds: string[];
-    onToggleNote: (id: string) => void;
+    selectedNotes: MixSelectableNote[];
+    onToggleNote: (note: MixSelectableNote) => void;
     demoSuggestions?: DemoSuggestionMap;
+    mixCategory?: string;
+    onChangeMixCategory?: (next: string) => void;
+    categories?: string[];
+    onAddCategory?: (next: string) => void;
+    onMix?: () => void;
+    isMixing?: boolean;
+    isMixAllowed?: boolean;
 };
 
-export const MainLayout = ({ children, editorHeader, selectedNoteIds, onToggleNote, demoSuggestions }: MainLayoutProps) => {
+export const MainLayout = ({
+    children,
+    editorHeader,
+    selectedNotes,
+    onToggleNote,
+    demoSuggestions,
+    mixCategory,
+    onChangeMixCategory,
+    categories,
+    onAddCategory,
+    onMix,
+    isMixing,
+    isMixAllowed
+}: MainLayoutProps) => {
     return (
-        <EditorProvider>
+    <EditorProvider>
             <div
-                className="min-h-screen bg-white"
+                className="min-h-[100dvh] bg-white"
                 style={{
                     ["--global-header-height" as string]: "3.5rem",
                     ["--editor-header-height" as string]: editorHeader ? "3rem" : "0px"
@@ -26,12 +47,23 @@ export const MainLayout = ({ children, editorHeader, selectedNoteIds, onToggleNo
                         {editorHeader}
                     </div>
                 )}
-                <div className="flex min-h-[calc(100vh-3.5rem)]">
+                <div className="flex min-h-[calc(100dvh-3.5rem)]">
                     <main className="flex-1 px-4 py-8 pr-12 lg:pr-80">
                         {children}
                     </main>
                     <div>
-                        <SuggestRail selectedNoteIds={selectedNoteIds} onToggleNote={onToggleNote} demoSuggestions={demoSuggestions} />
+                        <SuggestRail
+                            selectedNotes={selectedNotes}
+                            onToggleNote={onToggleNote}
+                            demoSuggestions={demoSuggestions}
+                            mixCategory={mixCategory}
+                            onChangeMixCategory={onChangeMixCategory}
+                            categories={categories}
+                            onAddCategory={onAddCategory}
+                            onMix={onMix}
+                            isMixing={isMixing}
+                            isMixAllowed={isMixAllowed}
+                        />
                     </div>
                 </div>
             </div>

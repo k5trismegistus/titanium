@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, ChevronRight, ChevronLeft, Calendar } from 'lucide-react';
+import { Lightbulb, ChevronRight, ChevronLeft, Calendar, ArrowUpRight } from 'lucide-react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { searchRelated } from '../../lib/firebase/functions';
 import { useAuth } from '../../lib/firebase/auth';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEditorContext } from '../../context/EditorContext';
+import { MixButton } from '../mix/MixButton';
+import { CategorySelect } from '../common/CategorySelect';
 
 export type DemoSuggestion = {
     id: string;
@@ -16,22 +18,50 @@ export type DemoSuggestion = {
 
 export type DemoSuggestionMap = Record<string, DemoSuggestion[]>;
 
+export type MixSelectableNote = {
+    id: string;
+    markdown: string;
+    updatedAt?: Date;
+};
+
 interface SuggestRailProps {
-    selectedNoteIds: string[];
-    onToggleNote: (id: string) => void;
+    selectedNotes: MixSelectableNote[];
+    onToggleNote: (note: MixSelectableNote) => void;
     demoSuggestions?: DemoSuggestionMap;
+    mixCategory?: string;
+    onChangeMixCategory?: (next: string) => void;
+    categories?: string[];
+    onAddCategory?: (next: string) => void;
+    onMix?: () => void;
+    isMixing?: boolean;
+    isMixAllowed?: boolean;
 }
 
-export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onToggleNote, demoSuggestions }) => {
+export const SuggestRail: React.FC<SuggestRailProps> = ({
+    selectedNotes,
+    onToggleNote,
+    demoSuggestions,
+    mixCategory,
+    onChangeMixCategory,
+    categories = [],
+    onAddCategory,
+    onMix,
+    isMixing = false,
+    isMixAllowed = false
+}) => {
     const { user } = useAuth();
     const { noteId: currentId } = useParams<{ noteId: string }>();
+    const navigate = useNavigate();
     const { activeSectionText, activeSectionHeading } = useEditorContext();
     const [isOpen, setIsOpen] = useState(() => {
         if (typeof window === "undefined") return true;
         return window.innerWidth >= 1024;
     });
-    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [suggestions, setSuggestions] = useState<MixSelectableNote[]>([]);
     const [loading, setLoading] = useState(false);
+    const canOpenNotes = !demoSuggestions;
+    const selectedIds = new Set(selectedNotes.map((note) => note.id));
+    const filteredSuggestions = suggestions.filter((note) => !selectedIds.has(note.id));
 
     useEffect(() => {
         if (demoSuggestions) {
@@ -59,11 +89,14 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
                         limit(10)
                     );
                     const snap = await getDocs(q);
-                    const notes = snap.docs.map(d => ({
-                        id: d.id,
-                        ...d.data(),
-                        updatedAt: toDateSafe(d.data().updatedAt)
-                    }));
+                    const notes = snap.docs.map(d => {
+                        const data = d.data() as { markdown?: unknown; updatedAt?: unknown };
+                        return {
+                            id: d.id,
+                            markdown: typeof data.markdown === "string" ? data.markdown : "",
+                            updatedAt: toDateSafe(data.updatedAt)
+                        };
+                    });
                     setSuggestions(notes);
                     return;
                 }
@@ -110,29 +143,81 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
             </button>
 
             {isOpen ? (
-                <div className="p-4 h-full overflow-y-auto">
-                    <div className="flex items-center gap-2 mb-6 text-gray-500 text-sm font-medium">
-                        <Lightbulb size={16} />
-                        <span>Related Thoughts</span>
+                <div className="flex h-full flex-col">
+                    <div className="p-4">
+                        <div className="flex items-center gap-2 mb-6 text-gray-500 text-sm font-medium">
+                            <Lightbulb size={16} />
+                            <span>Related Thoughts</span>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        {loading ? (
-                            <div className="text-gray-400 text-xs text-center py-4">Finding connections...</div>
-                        ) : suggestions.length === 0 ? (
-                            <div className="text-gray-400 text-xs text-center py-4">No other notes found.</div>
-                        ) : (
-                            suggestions.map(note => (
-                                <SuggestItem
-                                    key={note.id}
-                                    title={note.markdown.slice(0, 50) || "Untitled Note"}
-                                    date={note.updatedAt}
-                                    checked={selectedNoteIds.includes(note.id)}
-                                    onToggle={() => onToggleNote(note.id)}
-                                />
-                            ))
+                    <div className="flex-1 overflow-y-auto px-4 pb-4">
+                        {selectedNotes.length > 0 && (
+                            <div className="mb-6">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                    Selected for Mix
+                                </div>
+                                <div className="mt-2 space-y-2">
+                                    {selectedNotes.map(note => (
+                                        <SuggestItem
+                                            key={`selected-${note.id}`}
+                                            title={note.markdown.slice(0, 50) || "Untitled Note"}
+                                            date={note.updatedAt}
+                                            checked
+                                            onToggle={() => onToggleNote(note)}
+                                            onOpen={canOpenNotes ? () => {
+                                                navigate(`/note/${note.id}`);
+                                            } : undefined}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="space-y-4">
+                            {loading ? (
+                                <div className="text-gray-400 text-xs text-center py-4">Finding connections...</div>
+                            ) : filteredSuggestions.length === 0 ? (
+                                <div className="text-gray-400 text-xs text-center py-4">No other notes found.</div>
+                            ) : (
+                                filteredSuggestions.map(note => (
+                                    <SuggestItem
+                                        key={note.id}
+                                        title={note.markdown.slice(0, 50) || "Untitled Note"}
+                                        date={note.updatedAt}
+                                        checked={selectedIds.has(note.id)}
+                                        onToggle={() => onToggleNote({
+                                            id: note.id,
+                                            markdown: note.markdown,
+                                            updatedAt: note.updatedAt
+                                        })}
+                                        onOpen={canOpenNotes ? () => {
+                                            navigate(`/note/${note.id}`);
+                                        } : undefined}
+                                    />
+                                ))
                         )}
                     </div>
+                    </div>
+
+                    {onMix && onChangeMixCategory && onAddCategory && (
+                        <div className="border-t border-muted bg-white/90 px-4 py-3">
+                            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                Mix Output
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                                <CategorySelect
+                                    value={mixCategory ?? ""}
+                                    options={categories}
+                                    onChange={onChangeMixCategory}
+                                    onAdd={onAddCategory}
+                                    selectClassName="min-w-[140px]"
+                                />
+                            </div>
+                            <div className="mt-3 flex justify-end">
+                                <MixButton onClick={onMix} disabled={!isMixAllowed} isLoading={isMixing} />
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="flex flex-col items-center pt-6 gap-4">
@@ -148,11 +233,13 @@ const SuggestItem = ({
     date,
     checked,
     onToggle,
+    onOpen,
 }: {
     title: string,
     date?: Date,
     checked: boolean,
     onToggle: () => void
+    onOpen?: () => void
 }) => (
     <div
         onClick={onToggle}
@@ -161,6 +248,19 @@ const SuggestItem = ({
             ${checked ? 'bg-green-50 border-primary ring-1 ring-primary' : 'bg-white border-gray-100 hover:shadow-md'}
         `}
     >
+        {onOpen && (
+            <button
+                type="button"
+                onClick={(event) => {
+                    event.stopPropagation();
+                    onOpen();
+                }}
+                className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-500 hover:text-primary hover:border-primary/40 transition-colors"
+            >
+                Open
+                <ArrowUpRight size={12} />
+            </button>
+        )}
         <div className="flex items-start gap-3">
             <div className={`
                 mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors

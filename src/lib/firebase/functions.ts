@@ -6,6 +6,7 @@ export interface MixRequest {
     sectionIds?: string[];
     stylePrompt?: string;
     category?: string;
+    baseNoteId?: string;
 }
 
 export interface MixResponse {
@@ -17,3 +18,9 @@ export const callMix = (data: MixRequest) => httpsCallable<MixRequest, { markdow
 export const searchRelated = (data: { noteId: string; limit?: number; queryText?: string }) =>
     httpsCallable<{ noteId: string; limit?: number; queryText?: string }, { results: any[] }>(functions, 'searchRelated')(data);
 export const updateEmbedding = httpsCallable<{ noteId: string }, void>(functions, 'updateEmbedding');
+
+export const searchNotes = (data: { queryText: string; limit?: number }) =>
+    httpsCallable<{ queryText: string; limit?: number }, { results: any[] }>(functions, 'searchNotes')(data);
+
+export const callQuickWord = (data: { word: string; category?: string }) =>
+    httpsCallable<{ word: string; category?: string }, { noteId: string; markdown: string }>(functions, 'quickWord')(data);
