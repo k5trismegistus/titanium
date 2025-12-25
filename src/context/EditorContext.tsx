@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type EditorContextValue = {
     activeSectionText: string;
@@ -11,6 +11,12 @@ const EditorContext = createContext<EditorContextValue | null>(null);
 export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
     const [activeSectionText, setActiveSectionText] = useState("");
     const [activeSectionHeading, setActiveSectionHeading] = useState("");
+
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        const preview = activeSectionText.slice(0, 50);
+        console.log(`[editor] active section heading="${activeSectionHeading}" text="${preview}"`);
+    }, [activeSectionText, activeSectionHeading]);
 
     const value = useMemo<EditorContextValue>(() => ({
         activeSectionText,

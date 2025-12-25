@@ -69,13 +69,17 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
                 }
 
                 // Call Vector Search
-                const queryText = activeSectionText && activeSectionText.length > 10 ? activeSectionText : undefined;
+                const trimmedSection = activeSectionText?.trim() ?? "";
+                const queryText = trimmedSection.length > 0 ? activeSectionText : undefined;
+                if (import.meta.env.DEV) {
+                    const preview = queryText ? queryText.slice(0, 50) : "";
+                    console.log(`[suggest] queryText len=${queryText?.length ?? 0} preview="${preview}"`);
+                }
                 const result = await searchRelated({ noteId: currentId, queryText });
                 const relatedNotes = result.data.results.map((r: any) => ({
                     id: r.id,
                     markdown: r.markdown,
-                    updatedAt: toDateSafe(r.date),
-                    score: r.score
+                    updatedAt: toDateSafe(r.date)
                 }));
 
                 setSuggestions(relatedNotes);
@@ -125,7 +129,6 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({ selectedNoteIds, onTog
                                     date={note.updatedAt}
                                     checked={selectedNoteIds.includes(note.id)}
                                     onToggle={() => onToggleNote(note.id)}
-                                    score={note.score}
                                 />
                             ))
                         )}
@@ -145,13 +148,11 @@ const SuggestItem = ({
     date,
     checked,
     onToggle,
-    score
 }: {
     title: string,
     date?: Date,
     checked: boolean,
-    onToggle: () => void,
-    score?: number
+    onToggle: () => void
 }) => (
     <div
         onClick={onToggle}
@@ -178,12 +179,6 @@ const SuggestItem = ({
                             <Calendar size={10} />
                             {date.toLocaleDateString()}
                         </div>
-                        {/*@ts-ignore*/}
-                        {score !== undefined && (
-                            <span className="text-[10px] bg-green-100 text-green-700 px-1.5 rounded-full">
-                                {Math.round(score * 100)}% Match
-                            </span>
-                        )}
                     </div>
                 )}
             </div>

@@ -111,3 +111,5 @@ dist
 *.njsproj
 *.sln
 *.sw?
+
+rss_markdown/*

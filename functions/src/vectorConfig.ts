@@ -1,0 +1,2 @@
+export const VECTOR_DIMENSION = 2048;
+export const SOURCE_VECTOR_DIMENSION = 3072;

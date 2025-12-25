@@ -23,8 +23,36 @@
                     "order": "ASCENDING"
                 },
                 {
-                    "fieldPath": "embedding",
+                    "fieldPath": "__name__",
                     "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "embedding",
+                    "vectorConfig": {
+                        "dimension": 2048,
+                        "flat": {}
+                    }
+                }
+            ]
+        },
+        {
+            "collectionGroup": "notes",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "__name__",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "embedding",
+                    "vectorConfig": {
+                        "dimension": 2048,
+                        "flat": {}
+                    }
                 }
             ]
         }

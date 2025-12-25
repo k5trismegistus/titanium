@@ -143,6 +143,14 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                     const target = e.target as HTMLTextAreaElement;
                     setCursorIndex(target.selectionStart ?? 0);
                 }}
+                onClick={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    setCursorIndex(target.selectionStart ?? 0);
+                }}
+                onKeyUp={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    setCursorIndex(target.selectionStart ?? 0);
+                }}
                 placeholder="Start writing..."
                 readOnly={readOnly}
                 className="w-full resize-none outline-none text-lg text-text leading-relaxed placeholder:text-gray-300 break-all"

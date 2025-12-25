@@ -71,7 +71,7 @@ export const onNoteWritten = onDocumentWritten({
             batch.set(docRef, {
                 title: res.title,
                 content: res.content,
-                embedding: res.embedding,
+                embedding: admin.firestore.FieldValue.vector(res.embedding),
                 userId: newData?.userId || "",
                 noteId: event.params.noteId,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -80,7 +80,7 @@ export const onNoteWritten = onDocumentWritten({
 
         // Update main note embedding
         batch.set(snapshot.after.ref, {
-            embedding: noteEmbedding,
+            embedding: admin.firestore.FieldValue.vector(noteEmbedding),
             embeddingUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 

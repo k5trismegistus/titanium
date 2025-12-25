@@ -13,7 +13,8 @@
     "deploy:backend": "firebase deploy --only functions,firestore,storage",
     "deploy:frontend": "npm run build && firebase deploy --only hosting",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "reindex": "npm --prefix functions run reindex"
   },
   "keywords": [],
   "author": "",
