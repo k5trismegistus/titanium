@@ -45,7 +45,7 @@ const fetchNoteVectorResults = async (
   excludeNoteId?: string,
   existingIds: Set<string> = new Set()
 ): Promise<{ id: string; markdown: string; date: any }[]> => {
-  const fetchLimit = Math.min(limitVal * 5, 50);
+  const fetchLimit = Math.min(limitVal + 2, 10);
   let vectorSnap: any;
   try {
     vectorSnap = await db
@@ -53,7 +53,7 @@ const fetchNoteVectorResults = async (
       .where("userId", "==", uid)
       .findNearest("embedding", targetEmbedding, {
         limit: fetchLimit,
-        distanceMeasure: "COSINE",
+        distanceMeasure: "EUCLIDEAN",
       })
       .get();
   } catch (e) {
@@ -155,63 +155,7 @@ export const searchRelated = onCall<SearchRequest>(
         console.log(`searchRelated queryText len=${safeQueryText.length} embedding len=${queryEmbeddingLength} valid=${queryEmbeddingValid} usedQueryEmbedding=${usedQueryEmbedding} targetEmbeddingLen=${targetEmbedding.length}`);
       }
 
-      // 2. Fetch Candidates via kNN Vector Search
-      if (usedQueryEmbedding) {
-        const fetchLimit = Math.min(limitVal * 20, 200);
-        let sectionSnap;
-        try {
-          sectionSnap = await db
-            .collectionGroup("sections")
-            .where("userId", "==", uid)
-            .findNearest("embedding", targetEmbedding, {
-              limit: fetchLimit,
-              distanceMeasure: "COSINE",
-            })
-            .get();
-        } catch (e) {
-          console.error("Failed to run section vector search:", e);
-          const fallbackResults = await fetchNoteVectorResults(uid, targetEmbedding, limitVal, resolvedNoteId);
-          return { results: fallbackResults };
-        }
-        console.log(`searchRelated sectionSnap docs=${sectionSnap.docs.length}`);
-
-        const seenNotes = new Set<string>();
-        const orderedNoteIds: string[] = [];
-        sectionSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const derivedNoteId = doc.ref.parent.parent?.id ?? "";
-          const dataNoteId = typeof data.noteId === "string" ? data.noteId : "";
-          const sectionNoteId = derivedNoteId || dataNoteId;
-          if (!sectionNoteId) return;
-          if (resolvedNoteId && sectionNoteId === resolvedNoteId) return;
-          if (seenNotes.has(sectionNoteId)) return;
-          seenNotes.add(sectionNoteId);
-          orderedNoteIds.push(sectionNoteId);
-        });
-
-        if (orderedNoteIds.length === 0) {
-          const fallbackResults = await fetchNoteVectorResults(uid, targetEmbedding, limitVal, resolvedNoteId);
-          return { results: fallbackResults };
-        }
-
-        const noteDocs = await Promise.all(
-          orderedNoteIds
-            .filter((id) => id && id !== resolvedNoteId)
-            .slice(0, limitVal)
-            .map((id) => db.collection("notes").doc(id).get())
-        );
-        const results = buildNoteResults(
-          noteDocs.filter((doc) => doc.exists && doc.data()?.userId === uid)
-        );
-        if (results.length >= limitVal) {
-          return { results };
-        }
-
-        const existingIds = new Set(results.map((result) => result.id));
-        const fallback = await fetchNoteVectorResults(uid, targetEmbedding, limitVal - results.length, resolvedNoteId, existingIds);
-        return { results: [...results, ...fallback].slice(0, limitVal) };
-      }
-
+      // 2. Fetch Candidates via note-level kNN Vector Search
       const results = await fetchNoteVectorResults(uid, targetEmbedding, limitVal, resolvedNoteId);
       return { results };
     } catch (e: any) {
