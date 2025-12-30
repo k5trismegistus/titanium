@@ -24,3 +24,6 @@ export const searchNotes = (data: { queryText: string; limit?: number }) =>
 
 export const callQuickWord = (data: { word: string; category?: string }) =>
     httpsCallable<{ word: string; category?: string }, { noteId: string; markdown: string }>(functions, 'quickWord')(data);
+
+export const ensureAllowedUser = () =>
+    httpsCallable<void, { created: boolean }>(functions, 'ensureAllowedUser')();

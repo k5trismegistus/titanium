@@ -1,12 +1,20 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import { VertexAI } from "@google-cloud/vertexai";
 import { projectID } from "firebase-functions/params";
 
 const db = admin.firestore();
 
 const preferredLocations = ["asia-northeast1", "us-central1"];
 const modelCandidates = ["gemini-2.5-flash"];
+let VertexAIClass: typeof import("@google-cloud/vertexai").VertexAI | null = null;
+
+const getVertexAIClass = async () => {
+  if (!VertexAIClass) {
+    const mod = await import("@google-cloud/vertexai");
+    VertexAIClass = mod.VertexAI;
+  }
+  return VertexAIClass;
+};
 
 interface QuickWordRequest {
   word: string;
@@ -57,6 +65,7 @@ export const quickWord = onCall<QuickWordRequest>(
         Return only the Markdown content.
       `;
 
+      const VertexAI = await getVertexAIClass();
       for (const location of preferredLocations) {
         const vertexAI = new VertexAI({ location, project });
         for (const model of modelCandidates) {

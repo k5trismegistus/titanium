@@ -6,4 +6,5 @@ export * from "./mix";
 export * from "./triggers";
 export * from "./search";
 export * from "./quickWord";
+export * from "./allowedUsers";
 // export * from "./embedding"; // Deprecated/stub

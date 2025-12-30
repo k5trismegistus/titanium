@@ -1,4 +1,3 @@
-import { PredictionServiceClient, helpers } from "@google-cloud/aiplatform";
 import { SOURCE_VECTOR_DIMENSION, VECTOR_DIMENSION } from "./vectorConfig";
 import { applyRandomProjection } from "./randomProjection";
 
@@ -7,7 +6,20 @@ const clientOptions = {
   apiEndpoint: "asia-northeast1-aiplatform.googleapis.com",
 };
 
-const client = new PredictionServiceClient(clientOptions);
+let predictionClient: import("@google-cloud/aiplatform").PredictionServiceClient | null = null;
+let aiplatformHelpers: typeof import("@google-cloud/aiplatform").helpers | null = null;
+
+const getPredictionClient = async (): Promise<{
+  client: import("@google-cloud/aiplatform").PredictionServiceClient;
+  helpers: typeof import("@google-cloud/aiplatform").helpers;
+}> => {
+  if (!predictionClient || !aiplatformHelpers) {
+    const { PredictionServiceClient, helpers } = await import("@google-cloud/aiplatform");
+    predictionClient = new PredictionServiceClient(clientOptions);
+    aiplatformHelpers = helpers;
+  }
+  return { client: predictionClient, helpers: aiplatformHelpers };
+};
 
 const resolveProjectId = (): string => {
   const envProject = process.env.GCLOUD_PROJECT
@@ -53,6 +65,7 @@ export async function generateEmbeddingRaw(
     instance.title = title;
   }
 
+  const { client, helpers } = await getPredictionClient();
   const instanceValue = helpers.toValue(instance) as any;
   if (!instanceValue) throw new Error("Failed to convert instance to Value");
 

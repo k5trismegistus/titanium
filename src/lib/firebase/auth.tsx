@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./config";
+import { ensureAllowedUser } from "./functions";
 import { Chrome } from "lucide-react"; // Using Chrome icon as Google proxy
 import { Link, useLocation } from "react-router-dom";
 
@@ -23,14 +24,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isDemoRoute = location.pathname === "/demo";
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (u) => {
+        const unsubscribe = auth.onIdTokenChanged(async (u) => {
             setUser(u);
 
             if (u) {
                 // Build: Check whitelist in Firestore
                 try {
                     const userDocRef = doc(db, "allowedUsers", u.uid);
-                    const userDoc = await getDoc(userDocRef);
+                    let userDoc = await getDoc(userDocRef);
+
+                    if (!userDoc.exists()) {
+                        try {
+                            await u.getIdToken();
+                            await ensureAllowedUser();
+                        } catch (error) {
+                            console.warn("Failed to ensure allowed user record:", error);
+                        }
+                        userDoc = await getDoc(userDocRef);
+                    }
 
                     if (userDoc.exists() && userDoc.data().allowed === true) {
                         setIsAllowed(true);

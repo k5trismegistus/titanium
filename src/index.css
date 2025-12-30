@@ -10,6 +10,72 @@
   }
 }
 
+@layer components {
+  .tiptap {
+    @apply w-full min-h-[40dvh] outline-none text-lg text-text leading-relaxed break-all;
+  }
+
+  .tiptap p {
+    @apply my-0;
+  }
+
+  .tiptap h1 {
+    @apply text-3xl font-semibold text-gray-900;
+  }
+
+  .tiptap h2 {
+    @apply text-2xl font-semibold text-gray-900;
+  }
+
+  .tiptap h3 {
+    @apply text-xl font-semibold text-gray-900;
+  }
+
+  .tiptap ul {
+    @apply list-disc pl-6;
+  }
+
+  .tiptap ol {
+    @apply list-decimal pl-6;
+  }
+
+  .tiptap li {
+    @apply my-1;
+  }
+
+  .tiptap blockquote {
+    @apply border-l-2 border-gray-200 pl-3 italic text-gray-700;
+  }
+
+  .tiptap ul[data-type="taskList"] {
+    @apply list-none pl-0;
+  }
+
+  .tiptap ul[data-type="taskList"] li {
+    @apply flex items-start gap-2;
+  }
+
+  .tiptap ul[data-type="taskList"] li > label {
+    @apply mt-1;
+  }
+
+  .tiptap ul[data-type="taskList"] li > div {
+    @apply flex-1;
+  }
+
+  .tiptap img {
+    @apply max-w-full rounded-lg;
+  }
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #cbd5e1;
+  pointer-events: none;
+  height: 0;
+}
+
 @media (max-width: 768px) {
   input,
   select {
