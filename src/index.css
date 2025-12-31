@@ -31,6 +31,27 @@
     @apply text-xl font-semibold text-gray-900;
   }
 
+  .tiptap h1::before {
+    content: "# ";
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    font-weight: 400;
+  }
+
+  .tiptap h2::before {
+    content: "## ";
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    font-weight: 400;
+  }
+
+  .tiptap h3::before {
+    content: "### ";
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    font-weight: 400;
+  }
+
   .tiptap ul {
     @apply list-disc pl-6;
   }

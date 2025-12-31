@@ -4,12 +4,14 @@ import { Heading1, CheckSquare, List, Quote, Image as ImageIcon } from 'lucide-r
 import { useEditorContext } from '../../context/EditorContext';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Paragraph from '@tiptap/extension-paragraph';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import { Markdown } from 'tiptap-markdown';
 import type { MarkdownStorage } from 'tiptap-markdown';
+import { defaultMarkdownSerializer } from 'prosemirror-markdown';
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 
@@ -204,6 +206,23 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
     );
 };
 
+const PreserveEmptyParagraphs = Paragraph.extend({
+    addStorage() {
+        return {
+            markdown: {
+                serialize: (state, node) => {
+                    if (node.textContent.trim() === "") {
+                        state.write("\u00A0");
+                        state.closeBlock(node);
+                        return;
+                    }
+                    defaultMarkdownSerializer.nodes.paragraph(state, node);
+                }
+            }
+        };
+    }
+});
+
 const extractSectionAtCursor = (markdown: string, cursorIndex: number) => {
     if (!markdown) {
         return { heading: "Introduction", content: "" };
@@ -301,8 +320,10 @@ const TiptapEditor = ({
 
     const extensions = useMemo(() => [
         StarterKit.configure({
-            heading: { levels: [1, 2, 3] }
+            heading: { levels: [1, 2, 3] },
+            paragraph: false
         }),
+        PreserveEmptyParagraphs,
         TaskList,
         TaskItem.configure({ nested: true }),
         Image,
@@ -312,8 +333,8 @@ const TiptapEditor = ({
         Markdown.configure({
             html: false,
             bulletListMarker: "-",
-            transformPastedText: true,
-            transformCopiedText: false
+            transformPastedText: false,
+            transformCopiedText: true
         })
     ], []);
 
@@ -326,7 +347,10 @@ const TiptapEditor = ({
                 class: "tiptap"
             }
         },
-        onUpdate: ({ editor }) => {
+        onUpdate: ({ editor, transaction }) => {
+            if (!transaction.docChanged || !editor.isFocused) {
+                return;
+            }
             const markdown = getEditorMarkdown(editor);
             setContent(markdown);
             updateActiveSectionFromEditor(editor, setActiveSection);
