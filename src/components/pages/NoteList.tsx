@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Calendar } from 'lucide-react';
-import { collection, query, where, getDocs, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Plus, FileText, Calendar, Loader2, Trash2 } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { useAuth } from '../../lib/firebase/auth';
 import { useUserCategories } from '../../hooks/useUserCategories';
@@ -21,6 +21,7 @@ export const NoteList: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Note[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
     const { categories } = useUserCategories();
     const defaultCategory = categories[0] || "Memo";
 
@@ -112,6 +113,24 @@ export const NoteList: React.FC = () => {
         }
     };
 
+    const handleDeleteNote = async (noteId: string) => {
+        if (!user || deletingNoteId) return;
+        const shouldDelete = window.confirm("Delete this note? This action cannot be undone.");
+        if (!shouldDelete) return;
+
+        setDeletingNoteId(noteId);
+        try {
+            await deleteDoc(doc(db, "notes", noteId));
+            setNotes((prev) => prev.filter((item) => item.id !== noteId));
+            setSearchResults((prev) => prev.filter((item) => item.id !== noteId));
+        } catch (e) {
+            console.error("Failed to delete note:", e);
+            alert("Failed to delete note.");
+        } finally {
+            setDeletingNoteId(null);
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto p-6 min-h-[100dvh]">
             <header className="flex justify-between items-center mb-8">
@@ -181,6 +200,21 @@ export const NoteList: React.FC = () => {
                                 <div className="flex items-start gap-3">
                                     <FileText size={16} className="text-gray-300 group-hover:text-primary transition-colors" />
                                     <div className="flex-1">
+                                        <div className="mb-1 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    void handleDeleteNote(note.id);
+                                                }}
+                                                disabled={deletingNoteId === note.id}
+                                                className="rounded-md p-1 text-gray-300 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                                aria-label="Delete note"
+                                                title="Delete note"
+                                            >
+                                                {deletingNoteId === note.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                            </button>
+                                        </div>
                                         <p className="text-gray-800 font-medium line-clamp-2">
                                             {note.markdown.slice(0, 120) || "Empty Note"}
                                         </p>
@@ -212,6 +246,19 @@ export const NoteList: React.FC = () => {
                             <div className="flex-1 overflow-hidden">
                                 <div className="flex items-start justify-between mb-2">
                                     <FileText size={16} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                    <button
+                                        type="button"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            void handleDeleteNote(note.id);
+                                        }}
+                                        disabled={deletingNoteId === note.id}
+                                        className="rounded-md p-1 text-gray-300 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                        aria-label="Delete note"
+                                        title="Delete note"
+                                    >
+                                        {deletingNoteId === note.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                    </button>
                                 </div>
                                 <p className="text-gray-800 font-medium line-clamp-3">
                                     {note.markdown.slice(0, 100) || "Empty Note"}

@@ -447,9 +447,18 @@ const updateActiveSectionFromEditor = (editor: Editor, setActiveSection: (next: 
 const getEditorMarkdown = (editor: Editor) => {
     const storage = editor.storage as { markdown?: MarkdownStorage };
     if (storage.markdown) {
-        return storage.markdown.getMarkdown();
+        return normalizeRichEditorMarkdown(storage.markdown.getMarkdown());
     }
-    return editor.getText();
+    return normalizeRichEditorMarkdown(editor.getText());
+};
+
+const normalizeRichEditorMarkdown = (markdown: string) => {
+    if (!markdown) return "";
+
+    return markdown
+        .replace(/\u00A0/g, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/([^\n])\n\n(?=[^\n])/g, "$1\n");
 };
 
 const extractSectionFromDoc = (doc: ProseMirrorNode, selectionFrom: number) => {

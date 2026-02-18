@@ -1,10 +1,10 @@
 # Titanium Note
 
-A concept "Thought-Support" note-taking application powered by **Gemini 2.0 Pro** (via Vertex AI for Firebase).
+A concept "Thought-Support" note-taking application powered by **Gemini 2.5 Flash** (via Vertex AI in Firebase).
 
 ## Features
-- **Clean Interface**: Distraction-free Markdown editor.
-- **Mix**: Synthesize multiple notes into new insights using Gemini 2.0 Pro.
+- **Clean Interface**: WYSIWYG-first editor with a Markdown toggle (raw + preview).
+- **Mix**: Synthesize multiple notes into new insights using Gemini 2.5 Flash.
 - **Quick Word**: Register a term to auto-generate an explainer note for future suggestions and Mix.
 - **Vector Search**: Semantic search across notes with top 5 results.
 - **Security**: Strict whitelist-based access control.
@@ -21,7 +21,7 @@ Before deploying, you must enable the following services in the [Firebase Consol
 1. **Authentication**:
    - Go to **Build** > **Authentication**.
    - Click **Get Started**.
-   - Enable **Anonymous** sign-in provider (and Google if desired).
+   - Enable the **Google** sign-in provider.
    
 2. **Firestore Database**:
    - Go to **Build** > **Firestore Database**.
@@ -33,12 +33,12 @@ Before deploying, you must enable the following services in the [Firebase Consol
    - Go to **Build** > **Storage**.
    - Click **Get Started**.
    - Start in **Production Mode**.
-   - **Important**: This step fixes the "Firebase Storage has not been set up" error.
+   - **Important**: Required for Markdown image uploads.
 
 4. **Vertex AI (Gemini)**:
    - Go to **Build** > **Vertex AI in Firebase** (or search for Vertex AI).
    - Click **Get Started** or **Enable**.
-   - **Blaze Plan (Pay as you go)** is required. Upgrade your project plan if needed.
+   - **Blaze Plan (Pay as you go)** is required for Gemini 2.5 Flash. Upgrade your project plan if needed.
 
 ## 2. Local Setup
 
@@ -84,7 +84,7 @@ Before deploying, you must enable the following services in the [Firebase Consol
 This application uses a strict **Whitelist** system.
 
 1. **Open the App**: Visit your deployed Hosting URL.
-2. **Login**: The app will automatically sign you in.
+2. **Login**: Sign in with Google (or use the `/demo` route for read-only).
 3. **Get UID**: Copy the **User ID (UID)** displayed on the "Access Denied" screen.
 4. **Approve User**:
    - Go to Firebase Console > **Firestore Database**.

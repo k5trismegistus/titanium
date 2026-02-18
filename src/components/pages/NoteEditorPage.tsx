@@ -7,7 +7,7 @@ import { useUserCategories } from '../../hooks/useUserCategories';
 import { EditorHeader, SaveStatus } from '../editor/EditorHeader';
 import { useAuth } from '../../lib/firebase/auth';
 import { callMix as mix } from '../../lib/firebase/functions';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { X } from 'lucide-react';
 import type { MixSelectableNote } from '../suggestions/SuggestRail';
@@ -22,6 +22,7 @@ export const NoteEditorPage: React.FC = () => {
     const [mixResult, setMixResult] = useState("");
     const [isMixModalOpen, setIsMixModalOpen] = useState(false);
     const [isSavingMix, setIsSavingMix] = useState(false);
+    const [isDeletingNote, setIsDeletingNote] = useState(false);
 
     const { categories, addCategory, isLoading: isCategoriesLoading } = useUserCategories();
     const defaultCategory = categories[0] || "Memo";
@@ -110,6 +111,26 @@ export const NoteEditorPage: React.FC = () => {
         }
     };
 
+    const handleDeleteNote = async () => {
+        if (!user || isDeletingNote) return;
+        const docId = resolvedNoteId === "scratchpad" ? `scratchpad-${user.uid}` : resolvedNoteId;
+        if (!docId) return;
+
+        const shouldDelete = window.confirm("Delete this note? This action cannot be undone.");
+        if (!shouldDelete) return;
+
+        setIsDeletingNote(true);
+        try {
+            await deleteDoc(doc(db, "notes", docId));
+            navigate("/");
+        } catch (e) {
+            console.error("Failed to delete note:", e);
+            alert("Failed to delete note.");
+        } finally {
+            setIsDeletingNote(false);
+        }
+    };
+
     return (
         <>
             <MainLayout
@@ -122,6 +143,8 @@ export const NoteEditorPage: React.FC = () => {
                         onAddCategory={(next) => {
                             void addCategory(next);
                         }}
+                        onDeleteNote={handleDeleteNote}
+                        isDeletingNote={isDeletingNote}
                     />
                 }
                 selectedNotes={selectedNotes}

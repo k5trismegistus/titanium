@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { CategorySelect } from '../common/CategorySelect';
 
 export type SaveStatus = "dirty" | "saving" | "saved";
@@ -10,6 +10,8 @@ type EditorHeaderProps = {
     setCategory: (next: string) => void;
     categories: string[];
     onAddCategory: (next: string) => void;
+    onDeleteNote?: () => void;
+    isDeletingNote?: boolean;
 };
 
 export const EditorHeader: React.FC<EditorHeaderProps> = ({
@@ -17,7 +19,9 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
     category,
     setCategory,
     categories,
-    onAddCategory
+    onAddCategory,
+    onDeleteNote,
+    isDeletingNote = false
 }) => {
     return (
         <div className="flex h-12 items-center justify-between gap-3 px-4">
@@ -30,7 +34,21 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                     onAdd={onAddCategory}
                 />
             </div>
-            <SaveIndicator status={saveStatus} />
+            <div className="flex items-center gap-2">
+                {onDeleteNote && (
+                    <button
+                        type="button"
+                        onClick={onDeleteNote}
+                        disabled={isDeletingNote}
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        aria-label="Delete note"
+                    >
+                        {isDeletingNote ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                        <span>Delete</span>
+                    </button>
+                )}
+                <SaveIndicator status={saveStatus} />
+            </div>
         </div>
     );
 };
