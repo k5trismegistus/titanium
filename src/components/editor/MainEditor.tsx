@@ -12,6 +12,7 @@ import Image from '@tiptap/extension-image';
 import { Markdown } from 'tiptap-markdown';
 import type { MarkdownStorage } from 'tiptap-markdown';
 import { defaultMarkdownSerializer } from 'prosemirror-markdown';
+import type { MarkdownSerializerState } from 'prosemirror-markdown';
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 
@@ -210,13 +211,18 @@ const PreserveEmptyParagraphs = Paragraph.extend({
     addStorage() {
         return {
             markdown: {
-                serialize: (state, node) => {
+                serialize: (
+                    state: MarkdownSerializerState,
+                    node: ProseMirrorNode,
+                    parent: ProseMirrorNode,
+                    index: number
+                ) => {
                     if (node.textContent.trim() === "") {
                         state.write("\u00A0");
                         state.closeBlock(node);
                         return;
                     }
-                    defaultMarkdownSerializer.nodes.paragraph(state, node);
+                    defaultMarkdownSerializer.nodes.paragraph(state, node, parent, index);
                 }
             }
         };

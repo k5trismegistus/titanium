@@ -13,7 +13,14 @@ type DemoSectionState = {
     text: string;
 };
 
-const DEMO_CONTENT = `# 問いの核
+const DEMO_CONTENT = `# デモの見どころ
+この画面は読み取り専用。WYSIWYGの見た目と関連ノート体験だけ確認できます。
+
+- 右上のトグルで WYSIWYG / Markdown を切り替え
+- WYSIWYGでも見出しの # が残る
+- Markdownモードでは下にPreviewが出る
+
+# 問いの核
 AIは「正解を出す」よりも「思考の流れを止めない」ほうが価値が高い。
 ノートは記録ではなく探索。書きながら問いを磨く場所にしたい。
 そのために、関連ノートの接続とMixによる発展を自然に起こす。
@@ -35,6 +42,26 @@ Mix結果の保存後に、生成ノートが増える導線を見せる。
 `;
 
 const DEMO_SUGGESTIONS: DemoSuggestionMap = {
+    'デモの見どころ': [
+        {
+            id: 'demo-ui-1',
+            markdown: 'WYSIWYGとMarkdownを両立させる編集設計',
+            updatedAt: new Date('2024-02-15'),
+            score: 0.9
+        },
+        {
+            id: 'demo-ui-2',
+            markdown: '見出し記号を残して文脈を保つUI',
+            updatedAt: new Date('2024-02-09'),
+            score: 0.86
+        },
+        {
+            id: 'demo-ui-3',
+            markdown: 'デモで理解させる最小の説明量',
+            updatedAt: new Date('2024-01-27'),
+            score: 0.82
+        }
+    ],
     '問いの核': [
         {
             id: 'demo-focus-1',
