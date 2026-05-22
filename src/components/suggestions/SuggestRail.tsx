@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lightbulb, ChevronRight, ChevronLeft, Calendar, ArrowUpRight } from 'lucide-react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
@@ -27,6 +27,7 @@ export type MixSelectableNote = {
 interface SuggestRailProps {
     selectedNotes: MixSelectableNote[];
     onToggleNote: (note: MixSelectableNote) => void;
+    currentNoteMarkdown?: string;
     demoSuggestions?: DemoSuggestionMap;
     mixCategory?: string;
     onChangeMixCategory?: (next: string) => void;
@@ -40,6 +41,7 @@ interface SuggestRailProps {
 export const SuggestRail: React.FC<SuggestRailProps> = ({
     selectedNotes,
     onToggleNote,
+    currentNoteMarkdown,
     demoSuggestions,
     mixCategory,
     onChangeMixCategory,
@@ -62,6 +64,11 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     const canOpenNotes = !demoSuggestions;
     const selectedIds = new Set(selectedNotes.map((note) => note.id));
     const filteredSuggestions = suggestions.filter((note) => !selectedIds.has(note.id));
+    const queryText = useMemo(() => buildDistinctiveQueryText({
+        sectionHeading: activeSectionHeading,
+        sectionText: activeSectionText,
+        noteMarkdown: currentNoteMarkdown
+    }), [activeSectionHeading, activeSectionText, currentNoteMarkdown]);
 
     useEffect(() => {
         if (demoSuggestions) {
@@ -81,7 +88,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
             setLoading(true);
             try {
                 if (!currentId) {
-                    // Fallback to recent notes if no current note (e.g. on home, though this rail might not be visible)
+                    // 現在ノートがない場合は、最近のノートを提案する。
                     const q = query(
                         collection(db, "notes"),
                         where("userId", "==", user.uid),
@@ -101,12 +108,10 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                     return;
                 }
 
-                // Call Vector Search
-                const trimmedSection = activeSectionText?.trim() ?? "";
-                const queryText = trimmedSection.length > 0 ? activeSectionText : undefined;
+                // 文脈クエリでベクトル検索を呼び出す。
                 if (import.meta.env.DEV) {
-                    const preview = queryText ? queryText.slice(0, 50) : "";
-                    console.log(`[suggest] queryText len=${queryText?.length ?? 0} preview="${preview}"`);
+                    const preview = queryText ? queryText.slice(0, 80) : "";
+                    console.log(`[suggest] contextual queryText len=${queryText?.length ?? 0} preview="${preview}"`);
                 }
                 const result = await searchRelated({ noteId: currentId, queryText });
                 const relatedNotes = result.data.results.map((r: any) => ({
@@ -125,7 +130,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
 
         const timer = setTimeout(fetchSuggestions, 600);
         return () => clearTimeout(timer);
-    }, [user, currentId, activeSectionText, activeSectionHeading, demoSuggestions]);
+    }, [user, currentId, queryText, activeSectionHeading, demoSuggestions]);
 
     return (
         <div
@@ -285,6 +290,104 @@ const SuggestItem = ({
         </div>
     </div>
 );
+
+const STOPWORDS = new Set([
+    "the", "and", "for", "with", "that", "this", "from", "into", "about", "your",
+    "する", "いる", "ある", "こと", "ため", "よう", "これ", "それ", "どこ", "および", "また", "です", "ます"
+]);
+
+const MAX_QUERY_TEXT_LENGTH = 1000;
+const MAX_TOP_TERMS = 8;
+const MAX_TOP_SENTENCES = 3;
+
+const normalizeText = (text: string): string => text.replace(/\s+/g, " ").trim();
+
+const tokenize = (text: string): string[] => {
+    const matched = text.toLowerCase().match(/[a-z0-9]{2,}|[ぁ-んァ-ヶー一-龠々]{2,}/g);
+    if (!matched) return [];
+    return matched.filter((term) => !STOPWORDS.has(term));
+};
+
+const buildTermFreq = (tokens: string[]): Map<string, number> => {
+    const freq = new Map<string, number>();
+    tokens.forEach((token) => {
+        freq.set(token, (freq.get(token) ?? 0) + 1);
+    });
+    return freq;
+};
+
+const splitSentences = (text: string): string[] => {
+    const lines = text
+        .split(/[\n。！？!?]/g)
+        .map((line) => normalizeText(line))
+        .filter((line) => line.length >= 8);
+    return lines;
+};
+
+const buildDistinctiveQueryText = ({
+    sectionHeading,
+    sectionText,
+    noteMarkdown
+}: {
+    sectionHeading?: string;
+    sectionText?: string;
+    noteMarkdown?: string;
+}): string | undefined => {
+    const normalizedSectionText = normalizeText(sectionText ?? "");
+    if (!normalizedSectionText) return undefined;
+
+    const normalizedNote = normalizeText(noteMarkdown ?? "");
+    if (!normalizedNote) {
+        return normalizedSectionText.slice(0, MAX_QUERY_TEXT_LENGTH);
+    }
+
+    const sectionTokens = tokenize(normalizedSectionText);
+    const noteTokens = tokenize(normalizedNote);
+    if (sectionTokens.length === 0 || noteTokens.length === 0) {
+        return normalizedSectionText.slice(0, MAX_QUERY_TEXT_LENGTH);
+    }
+
+    const sectionFreq = buildTermFreq(sectionTokens);
+    const noteFreq = buildTermFreq(noteTokens);
+
+    const scoredTerms = Array.from(sectionFreq.entries())
+        .map(([term, freq]) => {
+            const globalFreq = noteFreq.get(term) ?? 0;
+            const specificity = freq / (globalFreq + 1);
+            return { term, score: specificity };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, MAX_TOP_TERMS);
+
+    const topTermSet = new Set(scoredTerms.map((item) => item.term));
+    const topTerms = scoredTerms.map((item) => item.term);
+
+    const scoredSentences = splitSentences(normalizedSectionText)
+        .map((sentence) => {
+            const sentenceTokens = Array.from(new Set(tokenize(sentence)));
+            const score = sentenceTokens.reduce((acc, term) => {
+                if (!topTermSet.has(term)) return acc;
+                const ranked = scoredTerms.find((item) => item.term === term);
+                return acc + (ranked?.score ?? 0);
+            }, 0);
+            return { sentence, score };
+        })
+        .sort((a, b) => b.score - a.score || b.sentence.length - a.sentence.length)
+        .slice(0, MAX_TOP_SENTENCES)
+        .map((item) => item.sentence);
+
+    const headingLine = normalizeText(sectionHeading ?? "");
+    const termLine = topTerms.length > 0 ? topTerms.join(" ") : "";
+    const sentenceBlock = scoredSentences.join("\n");
+    const fallbackBlock = normalizedSectionText.slice(0, 500);
+
+    const query = [headingLine, termLine, sentenceBlock || fallbackBlock]
+        .filter(Boolean)
+        .join("\n")
+        .slice(0, MAX_QUERY_TEXT_LENGTH);
+
+    return query || normalizedSectionText.slice(0, MAX_QUERY_TEXT_LENGTH);
+};
 
 const toDateSafe = (value: any): Date | undefined => {
     if (!value) return undefined;

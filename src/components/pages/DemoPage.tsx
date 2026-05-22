@@ -222,6 +222,7 @@ export const DemoPage: React.FC = () => {
     }, [category, mixCategoryTouched]);
 
     const saveStatus: SaveStatus = 'saved';
+    const characterCount = content.length;
 
     return (
         <>
@@ -229,6 +230,7 @@ export const DemoPage: React.FC = () => {
                 editorHeader={
                 <EditorHeader
                     saveStatus={saveStatus}
+                    characterCount={characterCount}
                     category={category}
                     setCategory={setCategory}
                     categories={categories}
@@ -237,6 +239,7 @@ export const DemoPage: React.FC = () => {
                 }
                 selectedNotes={selectedNotes}
                 onToggleNote={handleToggleNote}
+                currentNoteMarkdown={content}
                 demoSuggestions={DEMO_SUGGESTIONS}
                 mixCategory={mixCategory}
                 onChangeMixCategory={(next) => {

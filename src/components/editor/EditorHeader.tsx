@@ -6,6 +6,7 @@ export type SaveStatus = "dirty" | "saving" | "saved";
 
 type EditorHeaderProps = {
     saveStatus: SaveStatus;
+    characterCount: number;
     category: string;
     setCategory: (next: string) => void;
     categories: string[];
@@ -16,6 +17,7 @@ type EditorHeaderProps = {
 
 export const EditorHeader: React.FC<EditorHeaderProps> = ({
     saveStatus,
+    characterCount,
     category,
     setCategory,
     categories,
@@ -35,6 +37,9 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                 />
             </div>
             <div className="flex items-center gap-2">
+                <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                    {characterCount.toLocaleString()} chars
+                </div>
                 {onDeleteNote && (
                     <button
                         type="button"

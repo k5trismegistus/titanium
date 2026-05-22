@@ -6,7 +6,7 @@ const db = admin.firestore();
 
 // Initialize at runtime
 const preferredLocations = ["asia-northeast1", "us-central1"];
-const modelCandidates = ["gemini-2.5-flash"];
+const modelCandidates = ["gemini-3.0-flash", "gemini-3.0-pro", "gemini-2.5-flash"];
 let VertexAIClass: typeof import("@google-cloud/vertexai").VertexAI | null = null;
 
 const getVertexAIClass = async () => {

@@ -55,11 +55,46 @@
                     }
                 }
             ]
+        },
+        {
+            "collectionGroup": "salientItems",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "__name__",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "embedding",
+                    "vectorConfig": {
+                        "dimension": 2048,
+                        "flat": {}
+                    }
+                }
+            ]
         }
     ],
     "fieldOverrides": [
         {
             "collectionGroup": "sections",
+            "fieldPath": "userId",
+            "indexes": [
+                {
+                    "order": "ASCENDING",
+                    "queryScope": "COLLECTION_GROUP"
+                },
+                {
+                    "order": "DESCENDING",
+                    "queryScope": "COLLECTION_GROUP"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "salientItems",
             "fieldPath": "userId",
             "indexes": [
                 {

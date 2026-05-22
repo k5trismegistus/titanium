@@ -4,6 +4,7 @@ import { Heading1, CheckSquare, List, Quote, Image as ImageIcon } from 'lucide-r
 import { useEditorContext } from '../../context/EditorContext';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import HardBreak from '@tiptap/extension-hard-break';
 import Paragraph from '@tiptap/extension-paragraph';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
@@ -15,6 +16,10 @@ import { defaultMarkdownSerializer } from 'prosemirror-markdown';
 import type { MarkdownSerializerState } from 'prosemirror-markdown';
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+
+const BLANK_LINE_TOKEN_PREFIX = "[[titanium-blank-line:";
+const BLANK_LINE_TOKEN_SUFFIX = "]]";
+const BLANK_LINE_TOKEN_REGEX = /^\[\[titanium-blank-line:(\d+)\]\]$/;
 
 export const MainEditor: React.FC<{ content: string; setContent: (next: string) => void; readOnly?: boolean }> = ({ content, setContent, readOnly = false }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -51,7 +56,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
         const end = textarea.selectionEnd;
         const currentText = textarea.value;
 
-        // Check if start is at beginning of line
+        // 行頭から選択されているか確認する。
         const lineStart = currentText.lastIndexOf('\n', start - 1) + 1;
         const isAtLineStart = start === lineStart;
 
@@ -59,7 +64,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
 
         setContent(newText);
 
-        // Restore focus
+        // エディタへフォーカスを戻す。
         requestAnimationFrame(() => {
             textarea.focus();
             const newCursorPos = start + (isAtLineStart ? before.length : before.length + 1);
@@ -74,38 +79,34 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Simple validation
+        // 画像ファイルだけを受け付ける。
         if (!file.type.startsWith('image/')) {
             alert("Please select an image file.");
             return;
         }
 
         try {
-            // Lazy load storage to avoid init errors if not used
+            // 未使用時の初期化エラーを避けるため、Storage は遅延読み込みする。
             const { getStorage, ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
-            const storage = getStorage(); // Uses default app
+            const storage = getStorage(); // デフォルト app を使う
 
-            // Path: images/{userId}/{timestamp}_{filename}
-            // We need userId. We could get it from Auth context, or just use a random path if we trust rules.
-            // Better to pass usage auth or assume authenticated due to rules.
-            // Let's use a generic 'uploads' folder for MVP if auth context isn't handy in this component props.
-            // Actually, MainEditor is inside authenticated routes usually.
+            // MVP ではコンポーネントへ userId を渡さず、共通 uploads 配下へ保存する。
 
             const timestamp = Date.now();
             const storageRef = ref(storage, `uploads/${timestamp}_${file.name}`);
 
-            // Upload
+            // Storage へアップロードする。
             const snapshot = await uploadBytes(storageRef, file);
             const url = await getDownloadURL(snapshot.ref);
 
-            // Insert Markdown
+            // Markdown へ画像リンクを挿入する。
             insertText(`![${file.name}](${url})`);
 
         } catch (error) {
             console.error("Upload failed:", error);
             alert("Image upload failed.");
         } finally {
-            // Reset input
+            // 同じファイルを再選択できるよう input をリセットする。
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
@@ -137,7 +138,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
 
             {!readOnly && editorMode === "markdown" && (
                 <>
-                    {/* Floating Toolbar (Mobile only) */}
+                    {/* モバイル用の固定ツールバー */}
                     <div
                         className="sm:hidden fixed left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-sm py-2 px-2 rounded-xl border border-muted shadow-md flex gap-2"
                         style={{ bottom: "calc(1rem + var(--keyboard-offset, 0px) + env(safe-area-inset-bottom))" }}
@@ -207,7 +208,52 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
     );
 };
 
-const PreserveEmptyParagraphs = Paragraph.extend({
+const TitaniumParagraph = Paragraph.extend({
+    addAttributes() {
+        return {
+            blankLineCount: {
+                default: 0,
+                parseHTML: (element: HTMLElement) => {
+                    const value = element.getAttribute("data-blank-line-count");
+                    if (!value) return 0;
+                    const parsed = Number.parseInt(value, 10);
+                    return Number.isFinite(parsed) ? parsed : 0;
+                },
+                renderHTML: (attributes: { blankLineCount?: number }) => {
+                    const blankLineCount = attributes.blankLineCount ?? 0;
+                    if (blankLineCount <= 0) {
+                        return {};
+                    }
+
+                    return {
+                        "data-blank-line": "true",
+                        "data-blank-line-count": String(blankLineCount)
+                    };
+                }
+            },
+            blankLineDisplayCount: {
+                default: 0,
+                parseHTML: (element: HTMLElement) => {
+                    const value = element.getAttribute("data-blank-line-display-count");
+                    if (!value) return 0;
+                    const parsed = Number.parseInt(value, 10);
+                    return Number.isFinite(parsed) ? parsed : 0;
+                },
+                renderHTML: (attributes: { blankLineCount?: number; blankLineDisplayCount?: number }) => {
+                    const blankLineCount = attributes.blankLineCount ?? 0;
+                    const blankLineDisplayCount = attributes.blankLineDisplayCount ?? 0;
+                    if (blankLineCount <= 0 || blankLineDisplayCount <= 0) {
+                        return {};
+                    }
+
+                    return {
+                        "data-blank-line-display-count": String(blankLineDisplayCount),
+                        style: `--blank-line-count:${blankLineDisplayCount};`
+                    };
+                }
+            }
+        };
+    },
     addStorage() {
         return {
             markdown: {
@@ -217,12 +263,63 @@ const PreserveEmptyParagraphs = Paragraph.extend({
                     parent: ProseMirrorNode,
                     index: number
                 ) => {
-                    if (node.textContent.trim() === "") {
-                        state.write("\u00A0");
-                        state.closeBlock(node);
+                    const blankLineCount = typeof node.attrs.blankLineCount === "number" ? node.attrs.blankLineCount : 0;
+                    if (blankLineCount > 0 && node.textContent.length === 0) {
+                        const serializerState = state as MarkdownSerializerState & { flushClose: (size?: number) => void };
+                        if (index === 0) {
+                            serializerState.write("\n".repeat(blankLineCount));
+                            return;
+                        }
+
+                        serializerState.flushClose(blankLineCount);
                         return;
                     }
+
                     defaultMarkdownSerializer.nodes.paragraph(state, node, parent, index);
+                },
+                parse: {
+                    updateDOM: (element: Element) => {
+                        element.querySelectorAll("p").forEach((paragraph) => {
+                            const text = paragraph.textContent?.trim() ?? "";
+                            const match = text.match(BLANK_LINE_TOKEN_REGEX);
+                            if (!match) {
+                                return;
+                            }
+
+                            paragraph.textContent = "";
+                            paragraph.setAttribute("data-blank-line", "true");
+                            paragraph.setAttribute("data-blank-line-count", match[1]);
+                            const hasPreviousBlock = Boolean(paragraph.previousElementSibling);
+                            const hasNextBlock = Boolean(paragraph.nextElementSibling);
+                            const blankLineCount = Number.parseInt(match[1], 10);
+                            const displayCount = hasPreviousBlock && hasNextBlock
+                                ? Math.max(blankLineCount - 1, 1)
+                                : blankLineCount;
+
+                            paragraph.setAttribute("data-blank-line-display-count", String(displayCount));
+                            paragraph.setAttribute("style", `--blank-line-count:${displayCount};`);
+                        });
+                    }
+                }
+            }
+        };
+    }
+});
+
+const TitaniumHardBreak = HardBreak.extend({
+    addStorage() {
+        return {
+            markdown: {
+                serialize: (state: MarkdownSerializerState, node: ProseMirrorNode, parent: ProseMirrorNode, index: number) => {
+                    for (let i = index + 1; i < parent.childCount; i += 1) {
+                        if (parent.child(i).type !== node.type) {
+                            state.write("\n");
+                            return;
+                        }
+                    }
+                },
+                parse: {
+                    // markdown-it 側で処理する。
                 }
             }
         };
@@ -327,9 +424,11 @@ const TiptapEditor = ({
     const extensions = useMemo(() => [
         StarterKit.configure({
             heading: { levels: [1, 2, 3] },
+            hardBreak: false,
             paragraph: false
         }),
-        PreserveEmptyParagraphs,
+        TitaniumParagraph,
+        TitaniumHardBreak,
         TaskList,
         TaskItem.configure({ nested: true }),
         Image,
@@ -339,6 +438,7 @@ const TiptapEditor = ({
         Markdown.configure({
             html: false,
             bulletListMarker: "-",
+            breaks: true,
             transformPastedText: false,
             transformCopiedText: true
         })
@@ -346,7 +446,7 @@ const TiptapEditor = ({
 
     const editor = useEditor({
         extensions,
-        content: content || "",
+        content: prepareMarkdownForRichEditor(content || ""),
         editable: !readOnly,
         editorProps: {
             attributes: {
@@ -394,7 +494,7 @@ const TiptapEditor = ({
         if (!editor) return;
         const markdown = getEditorMarkdown(editor);
         if (content !== markdown) {
-            editor.commands.setContent(content || "", { emitUpdate: false });
+            editor.commands.setContent(prepareMarkdownForRichEditor(content || ""), { emitUpdate: false });
             updateActiveSectionFromEditor(editor, setActiveSection);
         }
     }, [content, editor, setActiveSection]);
@@ -447,18 +547,35 @@ const updateActiveSectionFromEditor = (editor: Editor, setActiveSection: (next: 
 const getEditorMarkdown = (editor: Editor) => {
     const storage = editor.storage as { markdown?: MarkdownStorage };
     if (storage.markdown) {
-        return normalizeRichEditorMarkdown(storage.markdown.getMarkdown());
+        return storage.markdown.getMarkdown();
     }
-    return normalizeRichEditorMarkdown(editor.getText());
+    return editor.getText();
 };
 
-const normalizeRichEditorMarkdown = (markdown: string) => {
+const getBlankLineToken = (blankLineCount: number) => `${BLANK_LINE_TOKEN_PREFIX}${blankLineCount}${BLANK_LINE_TOKEN_SUFFIX}`;
+
+const prepareMarkdownForRichEditor = (markdown: string) => {
     if (!markdown) return "";
 
-    return markdown
-        .replace(/\u00A0/g, "")
-        .replace(/\n{3,}/g, "\n\n")
-        .replace(/([^\n])\n\n(?=[^\n])/g, "$1\n");
+    return markdown.replace(/\n{2,}/g, (match, offset, input) => {
+        const isStart = offset === 0;
+        const isEnd = offset + match.length === input.length;
+        const token = getBlankLineToken(match.length);
+
+        if (isStart && isEnd) {
+            return token;
+        }
+
+        if (isStart) {
+            return `${token}\n\n`;
+        }
+
+        if (isEnd) {
+            return `\n\n${token}`;
+        }
+
+        return `\n\n${token}\n\n`;
+    });
 };
 
 const extractSectionFromDoc = (doc: ProseMirrorNode, selectionFrom: number) => {

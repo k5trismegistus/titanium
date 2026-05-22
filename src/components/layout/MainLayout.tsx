@@ -9,6 +9,7 @@ type MainLayoutProps = {
     editorHeader?: React.ReactNode;
     selectedNotes: MixSelectableNote[];
     onToggleNote: (note: MixSelectableNote) => void;
+    currentNoteMarkdown?: string;
     demoSuggestions?: DemoSuggestionMap;
     mixCategory?: string;
     onChangeMixCategory?: (next: string) => void;
@@ -24,6 +25,7 @@ export const MainLayout = ({
     editorHeader,
     selectedNotes,
     onToggleNote,
+    currentNoteMarkdown,
     demoSuggestions,
     mixCategory,
     onChangeMixCategory,
@@ -55,6 +57,7 @@ export const MainLayout = ({
                         <SuggestRail
                             selectedNotes={selectedNotes}
                             onToggleNote={onToggleNote}
+                            currentNoteMarkdown={currentNoteMarkdown}
                             demoSuggestions={demoSuggestions}
                             mixCategory={mixCategory}
                             onChangeMixCategory={onChangeMixCategory}

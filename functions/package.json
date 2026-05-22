@@ -8,6 +8,8 @@
         "start": "npm run shell",
         "reindex": "npm run build && node lib/reindex.js",
         "reindex:force": "npm run build && node lib/reindex.js --force",
+        "backfill:salient": "npm run build && node lib/backfillSalient.js",
+        "backfill:salient:force": "npm run build && node lib/backfillSalient.js --force",
         "deploy": "firebase deploy --only functions",
         "logs": "firebase functions:log"
     },

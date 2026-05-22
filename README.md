@@ -1,10 +1,11 @@
 # Titanium Note
 
-A concept "Thought-Support" note-taking application powered by **Gemini 2.5 Flash** (via Vertex AI in Firebase).
+A concept "Thought-Support" note-taking application powered by **Gemini** (via Vertex AI in Firebase), with **Gemini 3.0** preferred and **Gemini 2.5 Flash** as fallback.
 
 ## Features
 - **Clean Interface**: WYSIWYG-first editor with a Markdown toggle (raw + preview).
-- **Mix**: Synthesize multiple notes into new insights using Gemini 2.5 Flash.
+- **Stable Markdown Source**: Mode switching does not rewrite note text, and single newlines are treated as line breaks.
+- **Mix**: Synthesize multiple notes into new insights using Gemini (3.0 preferred, 2.5 fallback).
 - **Quick Word**: Register a term to auto-generate an explainer note for future suggestions and Mix.
 - **Vector Search**: Semantic search across notes with top 5 results.
 - **Security**: Strict whitelist-based access control.
@@ -38,7 +39,7 @@ Before deploying, you must enable the following services in the [Firebase Consol
 4. **Vertex AI (Gemini)**:
    - Go to **Build** > **Vertex AI in Firebase** (or search for Vertex AI).
    - Click **Get Started** or **Enable**.
-   - **Blaze Plan (Pay as you go)** is required for Gemini 2.5 Flash. Upgrade your project plan if needed.
+   - **Blaze Plan (Pay as you go)** is required for Gemini APIs (including Gemini 3.0 and Gemini 2.5 Flash). Upgrade your project plan if needed.
 
 ## 2. Local Setup
 
@@ -98,4 +99,36 @@ This application uses a strict **Whitelist** system.
 Run locally:
 ```bash
 npm run dev
+```
+
+## Maintenance Scripts (Functions)
+
+Run from `functions/`:
+
+```bash
+cd functions
+```
+
+- `npm run reindex`
+  - Rebuilds legacy vector fields (`notes.embedding`, `sections.embedding`) when missing/invalid.
+- `npm run reindex:force`
+  - Forces regeneration of the same legacy vectors.
+
+- `npm run backfill:salient`
+  - Backfills salient extraction for related-note search:
+    - `notes/{noteId}/salientItems/*`
+    - `notes.salientKeywords`
+    - `notes.salientClaims`
+    - `notes.salientUpdatedAt`
+- `npm run backfill:salient:force`
+  - Forces regeneration of salient data even if already present.
+
+Useful options:
+
+```bash
+# Dry run (no write)
+npm run backfill:salient -- --dry-run
+
+# Single user
+npm run backfill:salient -- --uid=<USER_UID>
 ```
