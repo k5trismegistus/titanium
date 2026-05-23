@@ -16,6 +16,7 @@ import { defaultMarkdownSerializer } from 'prosemirror-markdown';
 import type { MarkdownSerializerState } from 'prosemirror-markdown';
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { TextSelection } from '@tiptap/pm/state';
 
 const BLANK_LINE_TOKEN_PREFIX = "[[titanium-blank-line:";
 const BLANK_LINE_TOKEN_SUFFIX = "]]";
@@ -32,17 +33,25 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
         if (typeof window === "undefined" || !window.visualViewport) return;
 
         const viewport = window.visualViewport;
+        let frameId = 0;
+        let lastOffset = -1;
         const updateOffset = () => {
-            const offset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-            document.documentElement.style.setProperty("--keyboard-offset", `${offset}px`);
+            if (frameId) return;
+            frameId = window.requestAnimationFrame(() => {
+                frameId = 0;
+                const offset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+                const roundedOffset = Math.round(offset);
+                if (Math.abs(roundedOffset - lastOffset) < 2) return;
+                lastOffset = roundedOffset;
+                document.documentElement.style.setProperty("--keyboard-offset", `${roundedOffset}px`);
+            });
         };
 
         updateOffset();
         viewport.addEventListener("resize", updateOffset);
-        viewport.addEventListener("scroll", updateOffset);
         return () => {
+            if (frameId) window.cancelAnimationFrame(frameId);
             viewport.removeEventListener("resize", updateOffset);
-            viewport.removeEventListener("scroll", updateOffset);
             document.documentElement.style.removeProperty("--keyboard-offset");
         };
     }, [readOnly]);
@@ -119,7 +128,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
     }, [content, cursorIndex, editorMode, setActiveSection]);
 
     return (
-        <div className="relative w-full max-w-2xl mx-auto min-h-[calc(100dvh-10rem)] bg-white pt-4">
+        <div className="relative w-full max-w-2xl mx-auto min-h-[calc(100svh-10rem)] bg-white pt-4">
             <div className="mb-4 flex items-center justify-between">
                 <div className="text-xs text-gray-400">Editor</div>
                 <div className="inline-flex items-center gap-1 rounded-lg border border-muted bg-white p-1 text-xs">
@@ -451,6 +460,28 @@ const TiptapEditor = ({
         editorProps: {
             attributes: {
                 class: "tiptap"
+            },
+            handleDOMEvents: {
+                pointerdown: (view, event) => {
+                    const pointerEvent = event as PointerEvent;
+                    if (pointerEvent.pointerType !== "touch") return false;
+
+                    const position = view.posAtCoords({
+                        left: pointerEvent.clientX,
+                        top: pointerEvent.clientY
+                    });
+                    if (!position) return false;
+
+                    // ネイティブのフォーカス後に、タップ座標へ選択位置を戻す。
+                    window.setTimeout(() => {
+                        if (view.isDestroyed || !view.hasFocus()) return;
+                        const safePos = Math.max(0, Math.min(position.pos, view.state.doc.content.size));
+                        const selection = TextSelection.near(view.state.doc.resolve(safePos));
+                        view.dispatch(view.state.tr.setSelection(selection));
+                    }, 0);
+
+                    return false;
+                }
             }
         },
         onUpdate: ({ editor, transaction }) => {

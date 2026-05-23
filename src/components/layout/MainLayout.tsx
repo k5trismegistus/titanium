@@ -38,7 +38,7 @@ export const MainLayout = ({
     return (
     <EditorProvider>
             <div
-                className="min-h-[100dvh] bg-white"
+                className="min-h-[100svh] bg-white"
                 style={{
                     ["--global-header-height" as string]: "3.5rem",
                     ["--editor-header-height" as string]: editorHeader ? "3rem" : "0px"
@@ -49,7 +49,7 @@ export const MainLayout = ({
                         {editorHeader}
                     </div>
                 )}
-                <div className="flex min-h-[calc(100dvh-3.5rem)]">
+                <div className="flex min-h-[calc(100svh-3.5rem)]">
                     <main className="flex-1 px-4 py-8 pr-12 lg:pr-80">
                         {children}
                     </main>

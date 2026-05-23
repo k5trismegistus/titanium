@@ -5,8 +5,23 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply antialiased;
+    min-height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  #root {
+    min-height: 100%;
   }
 }
 
@@ -103,7 +118,9 @@
 
 @media (max-width: 768px) {
   input,
-  select {
+  select,
+  textarea,
+  [contenteditable="true"] {
     font-size: 16px;
   }
 }
