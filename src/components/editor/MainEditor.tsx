@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
-import { Heading1, CheckSquare, List, Quote, Image as ImageIcon } from 'lucide-react';
+import { Heading1, Heading2, Heading3, Type, CheckSquare, List, Quote, Image as ImageIcon } from 'lucide-react';
 import { useEditorContext } from '../../context/EditorContext';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -83,15 +83,11 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (readOnly) return;
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const uploadImage = async (file: File): Promise<string | undefined> => {
         // 画像ファイルだけを受け付ける。
         if (!file.type.startsWith('image/')) {
             alert("Please select an image file.");
-            return;
+            return undefined;
         }
 
         try {
@@ -100,20 +96,29 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
             const storage = getStorage(); // デフォルト app を使う
 
             // MVP ではコンポーネントへ userId を渡さず、共通 uploads 配下へ保存する。
-
             const timestamp = Date.now();
             const storageRef = ref(storage, `uploads/${timestamp}_${file.name}`);
 
-            // Storage へアップロードする。
+            // Storage へアップロードして公開 URL を返す。
             const snapshot = await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(snapshot.ref);
-
-            // Markdown へ画像リンクを挿入する。
-            insertText(`![${file.name}](${url})`);
-
+            return getDownloadURL(snapshot.ref);
         } catch (error) {
             console.error("Upload failed:", error);
             alert("Image upload failed.");
+            return undefined;
+        }
+    };
+
+    const handleMarkdownImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (readOnly) return;
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const url = await uploadImage(file);
+            if (!url) return;
+            // Markdown へ画像リンクを挿入する。
+            insertText(`![${file.name}](${url})`);
         } finally {
             // 同じファイルを再選択できるよう input をリセットする。
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -167,7 +172,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                         ref={fileInputRef}
                         className="hidden"
                         accept="image/*"
-                        onChange={handleImageUpload}
+                        onChange={handleMarkdownImageUpload}
                     />
                 </>
             )}
@@ -211,6 +216,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                     setContent={setContent}
                     readOnly={readOnly}
                     setActiveSection={setActiveSection}
+                    uploadImage={uploadImage}
                 />
             )}
         </div>
@@ -421,14 +427,17 @@ const TiptapEditor = ({
     content,
     setContent,
     readOnly,
-    setActiveSection
+    setActiveSection,
+    uploadImage
 }: {
     content: string;
     setContent: (next: string) => void;
     readOnly: boolean;
     setActiveSection: (next: { text: string; heading: string }) => void;
+    uploadImage: (file: File) => Promise<string | undefined>;
 }) => {
     const [isToolbarVisible, setIsToolbarVisible] = useState(false);
+    const richImageInputRef = useRef<HTMLInputElement>(null);
 
     const extensions = useMemo(() => [
         StarterKit.configure({
@@ -545,23 +554,48 @@ const TiptapEditor = ({
         && !editor.isActive("taskList")
         && !editor.isActive("blockquote");
 
+    const handleRichImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const url = await uploadImage(file);
+            if (!url) return;
+            editor.chain().focus().setImage({ src: url, alt: file.name }).run();
+        } finally {
+            if (richImageInputRef.current) richImageInputRef.current.value = "";
+        }
+    };
+
     return (
         <div className="space-y-4 pb-24">
             <EditorContent editor={editor} />
+            {!readOnly && (
+                <input
+                    type="file"
+                    ref={richImageInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleRichImageUpload}
+                />
+            )}
 
             {!readOnly && isToolbarVisible && (
                 <div
-                    className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-2xl border border-muted bg-white/95 px-3 py-2 text-sm shadow-md backdrop-blur max-w-[calc(100vw-2rem)] overflow-x-auto whitespace-nowrap"
+                    className="fixed left-1/2 -translate-x-1/2 z-40 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto rounded-2xl border border-muted bg-white/95 px-2 py-2 text-sm shadow-md backdrop-blur whitespace-nowrap"
                     style={{ bottom: "calc(1rem + var(--keyboard-offset, 0px) + env(safe-area-inset-bottom))" }}
                     onMouseDown={(event) => event.preventDefault()}
                 >
-                    <LineTypeButton label="Text" isActive={isPlainTextActive} onClick={() => editor.chain().focus().setParagraph().run()} />
-                    <LineTypeButton label="H1" isActive={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} />
-                    <LineTypeButton label="H2" isActive={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} />
-                    <LineTypeButton label="H3" isActive={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} />
-                    <LineTypeButton label="List" isActive={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} />
-                    <LineTypeButton label="Task" isActive={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()} />
-                    <LineTypeButton label="Quote" isActive={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
+                    <LineTypeButton icon={<Type size={18} />} label="Text" isActive={isPlainTextActive} onClick={() => editor.chain().focus().setParagraph().run()} />
+                    <LineTypeButton icon={<Heading1 size={18} />} label="H1" isActive={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} />
+                    <LineTypeButton icon={<Heading2 size={18} />} label="H2" isActive={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} />
+                    <LineTypeButton icon={<Heading3 size={18} />} label="H3" isActive={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} />
+                    <div className="mx-1 h-6 w-px shrink-0 bg-gray-200" />
+                    <LineTypeButton icon={<List size={18} />} label="List" isActive={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} />
+                    <LineTypeButton icon={<CheckSquare size={18} />} label="Task" isActive={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()} />
+                    <LineTypeButton icon={<Quote size={18} />} label="Quote" isActive={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
+                    <div className="mx-1 h-6 w-px shrink-0 bg-gray-200" />
+                    <LineTypeButton icon={<ImageIcon size={18} />} label="Image" isActive={false} onClick={() => richImageInputRef.current?.click()} />
                 </div>
             )}
         </div>
@@ -674,13 +708,24 @@ const ModeButton = ({ label, isActive, onClick }: { label: string; isActive: boo
     </button>
 );
 
-const LineTypeButton = ({ label, isActive, onClick }: { label: string; isActive: boolean; onClick: () => void }) => (
+const LineTypeButton = ({ icon, label, isActive, onClick }: { icon: React.ReactNode; label: string; isActive: boolean; onClick: () => void }) => (
     <button
         type="button"
-        onClick={onClick}
+        onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            // モバイルでツールバー操作中にエディタの選択位置を失わないようにする。
+            event.preventDefault();
+            onClick();
+        }}
+        onClick={(event) => {
+            if (event.detail !== 0) return;
+            onClick();
+        }}
         aria-pressed={isActive}
-        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${isActive ? "border-primary bg-green-50 text-primary" : "border-muted text-gray-500 hover:border-gray-300 hover:text-gray-700"}`}
+        title={label}
+        aria-label={label}
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors ${isActive ? "border-primary bg-green-50 text-primary" : "border-muted text-gray-500 hover:border-gray-300 hover:text-gray-700"}`}
     >
-        {label}
+        {icon}
     </button>
 );
