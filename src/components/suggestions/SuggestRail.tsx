@@ -69,6 +69,12 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
         sectionText: activeSectionText,
         noteMarkdown: currentNoteMarkdown
     }), [activeSectionHeading, activeSectionText, currentNoteMarkdown]);
+    const railClassName = isOpen
+        ? "fixed right-0 bottom-0 top-14 z-30 w-80 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:self-start"
+        : "fixed right-3 bottom-24 z-30 h-12 w-12 rounded-full bg-gray-50 border border-muted shadow-md transition-all duration-300 ease-in-out lg:sticky lg:right-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none lg:self-start";
+    const toggleButtonClassName = isOpen
+        ? "absolute -left-3 top-4 z-30 rounded-full border border-muted bg-white p-1 text-gray-400 shadow-sm hover:text-primary"
+        : "flex h-full w-full items-center justify-center rounded-full text-gray-400 hover:text-primary lg:absolute lg:-left-3 lg:top-4 lg:h-auto lg:w-auto lg:bg-white lg:border lg:border-muted lg:p-1 lg:shadow-sm";
 
     useEffect(() => {
         if (demoSuggestions) {
@@ -133,16 +139,12 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     }, [user, currentId, queryText, activeSectionHeading, demoSuggestions]);
 
     return (
-        <div
-            className={`
-        fixed right-0 bottom-0 top-14 z-30 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out
-        lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:self-start
-        ${isOpen ? 'w-80' : 'w-12'}
-      `}
-        >
+        <div className={railClassName}>
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="absolute -left-3 top-4 bg-white border border-muted rounded-full p-1 shadow-sm text-gray-400 hover:text-primary z-30"
+                className={toggleButtonClassName}
+                aria-label={isOpen ? "Close related thoughts" : "Open related thoughts"}
             >
                 {isOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>

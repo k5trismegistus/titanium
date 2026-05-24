@@ -50,7 +50,7 @@ export const MainLayout = ({
                     </div>
                 )}
                 <div className="flex min-h-[calc(100svh-3.5rem)] items-start">
-                    <main className="min-w-0 flex-1 px-4 py-8 pr-12 lg:pr-8">
+                    <main className="min-w-0 flex-1 px-4 py-8 lg:pr-8">
                         {children}
                     </main>
                     <aside className="shrink-0">
