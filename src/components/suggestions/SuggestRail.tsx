@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Lightbulb, ChevronRight, ChevronLeft, Calendar, ArrowUpRight } from 'lucide-react';
+import { Lightbulb, ChevronLeft, Calendar, ArrowUpRight, X } from 'lucide-react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { searchRelated } from '../../lib/firebase/functions';
@@ -70,12 +70,24 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
         noteMarkdown: currentNoteMarkdown
     }), [activeSectionHeading, activeSectionText, currentNoteMarkdown]);
     const railClassName = isOpen
-        ? "fixed right-0 bottom-0 top-14 z-30 w-80 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:self-start"
+        ? "fixed inset-x-0 bottom-0 top-0 z-50 w-full bg-gray-50 transition-all duration-300 ease-in-out lg:sticky lg:inset-x-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-80 lg:border-l lg:border-muted lg:self-start"
         : "fixed right-3 bottom-24 z-30 h-12 w-12 rounded-full bg-gray-50 border border-muted shadow-md transition-all duration-300 ease-in-out lg:sticky lg:right-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none lg:self-start";
-    // 開いた状態では、画面外に逃げないようパネル内へ閉じるボタンを置く。
+    // スマホでは全画面ドロワーとして開き、閉じるボタンを常に画面内へ置く。
     const toggleButtonClassName = isOpen
-        ? "absolute left-3 top-3 z-30 rounded-full border border-muted bg-white p-1.5 text-gray-400 shadow-sm hover:text-primary"
+        ? "absolute left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-30 rounded-full border border-muted bg-white p-2 text-gray-400 shadow-sm hover:text-primary lg:-left-3 lg:top-4 lg:p-1"
         : "flex h-full w-full items-center justify-center rounded-full text-gray-400 hover:text-primary lg:absolute lg:-left-3 lg:top-4 lg:h-auto lg:w-auto lg:bg-white lg:border lg:border-muted lg:p-1 lg:shadow-sm";
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (!isOpen || window.innerWidth >= 1024) return;
+
+        // ドロワー表示中に背面のエディタがスクロールしないよう固定する。
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isOpen]);
 
     useEffect(() => {
         if (demoSuggestions) {
@@ -148,19 +160,19 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                 aria-label={isOpen ? "Close related thoughts" : "Open related thoughts"}
                 aria-expanded={isOpen}
             >
-                {isOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                {isOpen ? <X size={16} /> : <ChevronLeft size={14} />}
             </button>
 
             {isOpen ? (
                 <div className="flex h-full flex-col">
-                    <div className="p-4 pl-12">
-                        <div className="flex items-center gap-2 mb-6 text-gray-500 text-sm font-medium">
-                            <Lightbulb size={16} />
+                    <div className="px-5 pb-4 pl-16 pt-[calc(1rem+env(safe-area-inset-top))] lg:p-4 lg:pl-12">
+                        <div className="flex min-h-10 items-center gap-2 text-gray-500 text-sm font-medium">
+                            <Lightbulb size={18} />
                             <span>Related Thoughts</span>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 pb-4">
+                    <div className="flex-1 overflow-y-auto px-5 pb-4 lg:px-4">
                         {selectedNotes.length > 0 && (
                             <div className="mb-6">
                                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
@@ -209,20 +221,20 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                     </div>
 
                     {onMix && onChangeMixCategory && onAddCategory && (
-                        <div className="border-t border-muted bg-white/90 px-4 py-3">
+                        <div className="border-t border-muted bg-white/95 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:px-4 lg:pb-3">
                             <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                                 Mix Output
                             </div>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex items-center gap-3">
                                 <CategorySelect
                                     value={mixCategory ?? ""}
                                     options={categories}
                                     onChange={onChangeMixCategory}
                                     onAdd={onAddCategory}
-                                    selectClassName="min-w-[140px]"
+                                    className="min-w-0 flex-1"
+                                    selectClassName="w-full"
+                                    inputClassName="w-full"
                                 />
-                            </div>
-                            <div className="mt-3 flex justify-end">
                                 <MixButton onClick={onMix} disabled={!isMixAllowed} isLoading={isMixing} />
                             </div>
                         </div>
@@ -253,32 +265,19 @@ const SuggestItem = ({
     <div
         onClick={onToggle}
         className={`
-            group p-3 rounded-xl border shadow-sm transition-all cursor-pointer relative
+            group p-3 rounded-xl border shadow-sm transition-all cursor-pointer
             ${checked ? 'bg-green-50 border-primary ring-1 ring-primary' : 'bg-white border-gray-100 hover:shadow-md'}
         `}
     >
-        {onOpen && (
-            <button
-                type="button"
-                onClick={(event) => {
-                    event.stopPropagation();
-                    onOpen();
-                }}
-                className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-500 hover:text-primary hover:border-primary/40 transition-colors"
-            >
-                Open
-                <ArrowUpRight size={12} />
-            </button>
-        )}
         <div className="flex items-start gap-3">
             <div className={`
-                mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors
+                mt-0.5 w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-colors
                 ${checked ? 'bg-primary border-primary text-white' : 'border-gray-300 bg-white'}
              `}>
                 {checked && <div className="w-2 h-2 bg-white rounded-full" />}
             </div>
 
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
                 <h4 className={`text-sm font-medium line-clamp-2 ${checked ? 'text-primary' : 'text-gray-700'}`}>
                     {title}
                 </h4>
@@ -291,6 +290,19 @@ const SuggestItem = ({
                     </div>
                 )}
             </div>
+            {onOpen && (
+                <button
+                    type="button"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onOpen();
+                    }}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-500 hover:text-primary hover:border-primary/40 transition-colors"
+                >
+                    Open
+                    <ArrowUpRight size={12} />
+                </button>
+            )}
         </div>
     </div>
 );
