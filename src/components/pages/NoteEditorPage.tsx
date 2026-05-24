@@ -31,8 +31,6 @@ export const NoteEditorPage: React.FC = () => {
     const { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory } = useSync(resolvedNoteId, "", defaultCategory);
     const hasUnsavedChanges = content !== lastSavedContent || category !== lastSavedCategory;
     const saveStatus: SaveStatus = isSaving ? "saving" : hasUnsavedChanges ? "dirty" : "saved";
-    const characterCount = content.length;
-
     useEffect(() => {
         if (isCategoriesLoading) return;
         if (!lastSavedCategory) return;
@@ -138,7 +136,6 @@ export const NoteEditorPage: React.FC = () => {
                 editorHeader={
                     <EditorHeader
                         saveStatus={saveStatus}
-                        characterCount={characterCount}
                         category={category}
                         setCategory={setCategory}
                         categories={categories}

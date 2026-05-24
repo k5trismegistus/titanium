@@ -72,8 +72,9 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     const railClassName = isOpen
         ? "fixed right-0 bottom-0 top-14 z-30 w-80 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:self-start"
         : "fixed right-3 bottom-24 z-30 h-12 w-12 rounded-full bg-gray-50 border border-muted shadow-md transition-all duration-300 ease-in-out lg:sticky lg:right-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none lg:self-start";
+    // 開いた状態では、画面外に逃げないようパネル内へ閉じるボタンを置く。
     const toggleButtonClassName = isOpen
-        ? "absolute -left-3 top-4 z-30 rounded-full border border-muted bg-white p-1 text-gray-400 shadow-sm hover:text-primary"
+        ? "absolute left-3 top-3 z-30 rounded-full border border-muted bg-white p-1.5 text-gray-400 shadow-sm hover:text-primary"
         : "flex h-full w-full items-center justify-center rounded-full text-gray-400 hover:text-primary lg:absolute lg:-left-3 lg:top-4 lg:h-auto lg:w-auto lg:bg-white lg:border lg:border-muted lg:p-1 lg:shadow-sm";
 
     useEffect(() => {
@@ -145,13 +146,14 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className={toggleButtonClassName}
                 aria-label={isOpen ? "Close related thoughts" : "Open related thoughts"}
+                aria-expanded={isOpen}
             >
                 {isOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
 
             {isOpen ? (
                 <div className="flex h-full flex-col">
-                    <div className="p-4">
+                    <div className="p-4 pl-12">
                         <div className="flex items-center gap-2 mb-6 text-gray-500 text-sm font-medium">
                             <Lightbulb size={16} />
                             <span>Related Thoughts</span>

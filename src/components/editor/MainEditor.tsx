@@ -27,6 +27,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
     const { setActiveSection } = useEditorContext();
     const [cursorIndex, setCursorIndex] = useState(0);
     const [editorMode, setEditorMode] = useState<"rich" | "markdown">("rich");
+    const characterCount = content.length;
 
     useEffect(() => {
         if (readOnly) return;
@@ -165,6 +166,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                         <ToolbarButton icon={<Quote size={18} />} onClick={() => insertText("> ")} label="Quote" />
                         <div className="w-px bg-gray-200 mx-1" />
                         <ToolbarButton icon={<ImageIcon size={18} />} onClick={() => fileInputRef.current?.click()} label="Image" />
+                        <CharacterCountBadge characterCount={characterCount} />
                     </div>
 
                     <input
@@ -217,6 +219,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                     readOnly={readOnly}
                     setActiveSection={setActiveSection}
                     uploadImage={uploadImage}
+                    characterCount={characterCount}
                 />
             )}
         </div>
@@ -428,13 +431,15 @@ const TiptapEditor = ({
     setContent,
     readOnly,
     setActiveSection,
-    uploadImage
+    uploadImage,
+    characterCount
 }: {
     content: string;
     setContent: (next: string) => void;
     readOnly: boolean;
     setActiveSection: (next: { text: string; heading: string }) => void;
     uploadImage: (file: File) => Promise<string | undefined>;
+    characterCount: number;
 }) => {
     const [isToolbarVisible, setIsToolbarVisible] = useState(false);
     const richImageInputRef = useRef<HTMLInputElement>(null);
@@ -596,6 +601,7 @@ const TiptapEditor = ({
                     <LineTypeButton icon={<Quote size={18} />} label="Quote" isActive={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
                     <div className="mx-1 h-6 w-px shrink-0 bg-gray-200" />
                     <LineTypeButton icon={<ImageIcon size={18} />} label="Image" isActive={false} onClick={() => richImageInputRef.current?.click()} />
+                    <CharacterCountBadge characterCount={characterCount} />
                 </div>
             )}
         </div>
@@ -695,6 +701,13 @@ const ToolbarButton = ({ icon, onClick, label }: { icon: React.ReactNode, onClic
     >
         {icon}
     </button>
+);
+
+const CharacterCountBadge = ({ characterCount }: { characterCount: number }) => (
+    // ヘッダーを圧迫しないよう、文字数は編集操作と同じ下部ツールバーへ寄せる。
+    <div className="ml-auto shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+        {characterCount.toLocaleString()} chars
+    </div>
 );
 
 const ModeButton = ({ label, isActive, onClick }: { label: string; isActive: boolean; onClick: () => void }) => (

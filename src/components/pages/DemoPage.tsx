@@ -222,7 +222,6 @@ export const DemoPage: React.FC = () => {
     }, [category, mixCategoryTouched]);
 
     const saveStatus: SaveStatus = 'saved';
-    const characterCount = content.length;
 
     return (
         <>
@@ -230,7 +229,6 @@ export const DemoPage: React.FC = () => {
                 editorHeader={
                 <EditorHeader
                     saveStatus={saveStatus}
-                    characterCount={characterCount}
                     category={category}
                     setCategory={setCategory}
                     categories={categories}

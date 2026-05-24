@@ -72,12 +72,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     };
 
     return (
-        <div className={`flex items-center gap-2 ${className}`}>
+        <div className={`flex min-w-0 items-center gap-2 ${className}`}>
             {!isAddingCategory ? (
                 <select
                     value={trimmedValue}
                     onChange={(e) => handleSelect(e.target.value)}
-                    className={`min-w-[160px] text-base border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none ${selectClassName}`}
+                    className={`min-w-0 w-40 max-w-full truncate text-base border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none ${selectClassName}`}
                 >
                     {resolvedOptions.map((item) => (
                         <option key={item} value={item}>
@@ -87,7 +87,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     <option value={ADD_OPTION_VALUE}>+ Add</option>
                 </select>
             ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                     <input
                         value={draftCategory}
                         onChange={(e) => setDraftCategory(e.target.value)}
@@ -101,14 +101,14 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                             }
                         }}
                         placeholder="New category"
-                        className={`w-36 text-base border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none ${inputClassName}`}
+                        className={`min-w-0 w-36 flex-1 text-base border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-primary focus:border-primary outline-none ${inputClassName}`}
                         autoFocus
                     />
                     <button
                         type="button"
                         onClick={handleAddCategory}
                         disabled={!draftCategory.trim()}
-                        className="text-xs font-medium text-primary hover:text-green-700 disabled:opacity-50"
+                        className="shrink-0 text-xs font-medium text-primary hover:text-green-700 disabled:opacity-50"
                     >
                         Add
                     </button>
@@ -118,7 +118,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                             setDraftCategory("");
                             setIsAddingCategory(false);
                         }}
-                        className="text-xs font-medium text-gray-400 hover:text-gray-600"
+                        className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-600"
                     >
                         Cancel
                     </button>
