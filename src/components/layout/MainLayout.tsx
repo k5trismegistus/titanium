@@ -49,11 +49,11 @@ export const MainLayout = ({
                         {editorHeader}
                     </div>
                 )}
-                <div className="flex min-h-[calc(100svh-3.5rem)]">
-                    <main className="flex-1 px-4 py-8 pr-12 lg:pr-80">
+                <div className="flex min-h-[calc(100svh-3.5rem)] items-start">
+                    <main className="min-w-0 flex-1 px-4 py-8 pr-12 lg:pr-8">
                         {children}
                     </main>
-                    <div>
+                    <aside className="shrink-0">
                         <SuggestRail
                             selectedNotes={selectedNotes}
                             onToggleNote={onToggleNote}
@@ -67,7 +67,7 @@ export const MainLayout = ({
                             isMixing={isMixing}
                             isMixAllowed={isMixAllowed}
                         />
-                    </div>
+                    </aside>
                 </div>
             </div>
         </EditorProvider>

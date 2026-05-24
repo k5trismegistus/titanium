@@ -133,7 +133,7 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
     }, [content, cursorIndex, editorMode, setActiveSection]);
 
     return (
-        <div className="relative w-full max-w-2xl mx-auto min-h-[calc(100svh-10rem)] bg-white pt-4">
+        <div className="relative w-full max-w-2xl mx-auto min-h-[calc(100svh-10rem)] bg-white pt-4 pb-24">
             <div className="mb-4 flex items-center justify-between">
                 <div className="text-xs text-gray-400">Editor</div>
                 <div className="inline-flex items-center gap-1 rounded-lg border border-muted bg-white p-1 text-xs">
@@ -154,8 +154,8 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                 <>
                     {/* モバイル用の固定ツールバー */}
                     <div
-                        className="sm:hidden fixed left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-sm py-2 px-2 rounded-xl border border-muted shadow-md flex gap-2"
-                        style={{ bottom: "calc(1rem + var(--keyboard-offset, 0px) + env(safe-area-inset-bottom))" }}
+                        className="fixed inset-x-0 z-40 flex gap-2 overflow-x-auto border-t border-muted bg-white/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:hidden"
+                        style={{ bottom: "var(--keyboard-offset, 0px)" }}
                     >
                         <ToolbarButton icon={<Heading1 size={18} />} onClick={() => insertText("# ")} label="Heading 1" />
                         <ToolbarButton icon={<Heading1 size={14} className="mt-1" />} onClick={() => insertText("## ")} label="Heading 2" />
@@ -582,8 +582,8 @@ const TiptapEditor = ({
 
             {!readOnly && isToolbarVisible && (
                 <div
-                    className="fixed left-1/2 -translate-x-1/2 z-40 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto rounded-2xl border border-muted bg-white/95 px-2 py-2 text-sm shadow-md backdrop-blur whitespace-nowrap"
-                    style={{ bottom: "calc(1rem + var(--keyboard-offset, 0px) + env(safe-area-inset-bottom))" }}
+                    className="fixed inset-x-0 z-40 flex items-center gap-1 overflow-x-auto border-t border-muted bg-white/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-sm shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur whitespace-nowrap"
+                    style={{ bottom: "var(--keyboard-offset, 0px)" }}
                     onMouseDown={(event) => event.preventDefault()}
                 >
                     <LineTypeButton icon={<Type size={18} />} label="Text" isActive={isPlainTextActive} onClick={() => editor.chain().focus().setParagraph().run()} />

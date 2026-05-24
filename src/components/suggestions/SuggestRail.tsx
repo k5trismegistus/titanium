@@ -135,10 +135,10 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     return (
         <div
             className={`
-        fixed right-0 bottom-0 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out z-30
+        fixed right-0 bottom-0 top-14 z-30 bg-gray-50 border-l border-muted transition-all duration-300 ease-in-out
+        lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:self-start
         ${isOpen ? 'w-80' : 'w-12'}
       `}
-            style={{ top: "calc(var(--global-header-height, 3.5rem) + var(--editor-header-height, 0px))" }}
         >
             <button
                 onClick={() => setIsOpen(!isOpen)}
