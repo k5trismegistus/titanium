@@ -28,6 +28,7 @@
 @layer components {
   .tiptap {
     @apply w-full min-h-[40dvh] outline-none text-lg text-text leading-relaxed break-all;
+    line-height: 1.85;
   }
 
   .tiptap p {
@@ -40,33 +41,42 @@
 
   .tiptap h1 {
     @apply text-3xl font-semibold text-gray-900;
+    margin-top: 1.7em;
+    margin-bottom: 0.35em;
+    line-height: 1.35;
   }
 
   .tiptap h2 {
     @apply text-2xl font-semibold text-gray-900;
+    margin-top: 1.55em;
+    margin-bottom: 0.35em;
+    line-height: 1.4;
   }
 
   .tiptap h3 {
     @apply text-xl font-semibold text-gray-900;
+    margin-top: 1.35em;
+    margin-bottom: 0.3em;
+    line-height: 1.45;
   }
 
   .tiptap h1::before {
     content: "# ";
-    color: #9ca3af;
+    color: #cbd5e1;
     margin-right: 0.5rem;
     font-weight: 400;
   }
 
   .tiptap h2::before {
     content: "## ";
-    color: #9ca3af;
+    color: #cbd5e1;
     margin-right: 0.5rem;
     font-weight: 400;
   }
 
   .tiptap h3::before {
     content: "### ";
-    color: #9ca3af;
+    color: #cbd5e1;
     margin-right: 0.5rem;
     font-weight: 400;
   }

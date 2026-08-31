@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Lightbulb } from 'lucide-react';
 import { SuggestRail } from '../suggestions/SuggestRail';
 import type { DemoSuggestionMap } from '../suggestions/SuggestRail';
 import type { MixSelectableNote } from '../suggestions/SuggestRail';
@@ -35,6 +36,11 @@ export const MainLayout = ({
     isMixing,
     isMixAllowed
 }: MainLayoutProps) => {
+    const [isSuggestOpen, setIsSuggestOpen] = useState(() => {
+        if (typeof window === "undefined") return true;
+        return window.innerWidth >= 1024;
+    });
+
     return (
     <EditorProvider>
             <div
@@ -45,8 +51,19 @@ export const MainLayout = ({
                 }}
             >
                 {editorHeader && (
-                    <div className="sticky top-14 z-40 border-b border-muted bg-white/95 backdrop-blur">
-                        {editorHeader}
+                    <div className="sticky top-14 z-40 flex items-center border-b border-muted bg-white/95 backdrop-blur">
+                        <div className="min-w-0 flex-1">
+                            {editorHeader}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsSuggestOpen(true)}
+                            className="mr-3 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 text-primary hover:bg-emerald-100 lg:hidden"
+                            aria-label="Open related thoughts"
+                            title="Open related thoughts"
+                        >
+                            <Lightbulb size={14} />
+                        </button>
                     </div>
                 )}
                 <div className="flex min-h-[calc(100svh-3.5rem)] items-start">
@@ -66,6 +83,8 @@ export const MainLayout = ({
                             onMix={onMix}
                             isMixing={isMixing}
                             isMixAllowed={isMixAllowed}
+                            isOpen={isSuggestOpen}
+                            onOpenChange={setIsSuggestOpen}
                         />
                     </aside>
                 </div>

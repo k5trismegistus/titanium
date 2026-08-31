@@ -9,6 +9,7 @@ import { useAuth } from '../../lib/firebase/auth';
 import { callMix as mix } from '../../lib/firebase/functions';
 import { addDoc, collection, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
+import { copyTextToClipboard } from '../../lib/clipboard';
 import { X } from 'lucide-react';
 import type { MixSelectableNote } from '../suggestions/SuggestRail';
 
@@ -130,6 +131,15 @@ export const NoteEditorPage: React.FC = () => {
         }
     };
 
+    const handleCopyNote = async () => {
+        try {
+            await copyTextToClipboard(content);
+        } catch (e) {
+            console.error("Failed to copy note:", e);
+            alert("Failed to copy note.");
+        }
+    };
+
     return (
         <>
             <MainLayout
@@ -142,6 +152,7 @@ export const NoteEditorPage: React.FC = () => {
                         onAddCategory={(next) => {
                             void addCategory(next);
                         }}
+                        onCopyNote={handleCopyNote}
                         onDeleteNote={handleDeleteNote}
                         isDeletingNote={isDeletingNote}
                     />

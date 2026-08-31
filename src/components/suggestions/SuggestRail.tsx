@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Lightbulb, ChevronLeft, Calendar, ArrowUpRight, X } from 'lucide-react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
@@ -36,6 +37,8 @@ interface SuggestRailProps {
     onMix?: () => void;
     isMixing?: boolean;
     isMixAllowed?: boolean;
+    isOpen?: boolean;
+    onOpenChange?: (next: boolean) => void;
 }
 
 export const SuggestRail: React.FC<SuggestRailProps> = ({
@@ -49,21 +52,26 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     onAddCategory,
     onMix,
     isMixing = false,
-    isMixAllowed = false
+    isMixAllowed = false,
+    isOpen: controlledIsOpen,
+    onOpenChange
 }) => {
     const { user } = useAuth();
     const { noteId: currentId } = useParams<{ noteId: string }>();
     const navigate = useNavigate();
     const { activeSectionText, activeSectionHeading } = useEditorContext();
-    const [isOpen, setIsOpen] = useState(() => {
+    const [internalIsOpen, setInternalIsOpen] = useState(() => {
         if (typeof window === "undefined") return true;
         return window.innerWidth >= 1024;
     });
     const [suggestions, setSuggestions] = useState<MixSelectableNote[]>([]);
+    const [isHintVisible, setIsHintVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const canOpenNotes = !demoSuggestions;
     const selectedIds = new Set(selectedNotes.map((note) => note.id));
     const filteredSuggestions = suggestions.filter((note) => !selectedIds.has(note.id));
+    const isOpen = controlledIsOpen ?? internalIsOpen;
+    const setIsOpen = onOpenChange ?? setInternalIsOpen;
     const queryText = useMemo(() => buildDistinctiveQueryText({
         sectionHeading: activeSectionHeading,
         sectionText: activeSectionText,
@@ -71,11 +79,13 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     }), [activeSectionHeading, activeSectionText, currentNoteMarkdown]);
     const railClassName = isOpen
         ? "fixed inset-x-0 bottom-0 top-0 z-50 w-full bg-gray-50 transition-all duration-300 ease-in-out lg:sticky lg:inset-x-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-80 lg:border-l lg:border-muted lg:self-start"
-        : "fixed right-3 bottom-24 z-30 h-12 w-12 rounded-full bg-gray-50 border border-muted shadow-md transition-all duration-300 ease-in-out lg:sticky lg:right-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none lg:self-start";
+        : "hidden transition-all duration-300 ease-in-out lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:block lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:border-l lg:border-muted lg:bg-gray-50 lg:self-start";
     // スマホでは全画面ドロワーとして開き、閉じるボタンを常に画面内へ置く。
     const toggleButtonClassName = isOpen
         ? "absolute left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-30 rounded-full border border-muted bg-white p-2 text-gray-400 shadow-sm hover:text-primary lg:-left-3 lg:top-4 lg:p-1"
         : "flex h-full w-full items-center justify-center rounded-full text-gray-400 hover:text-primary lg:absolute lg:-left-3 lg:top-4 lg:h-auto lg:w-auto lg:bg-white lg:border lg:border-muted lg:p-1 lg:shadow-sm";
+    const hintSuggestion = filteredSuggestions[0];
+    const hintText = hintSuggestion ? extractOpeningFragment(hintSuggestion.markdown) : "";
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -88,6 +98,18 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
             document.body.style.overflow = previousOverflow;
         };
     }, [isOpen]);
+
+    useEffect(() => {
+        setIsHintVisible(false);
+        if (typeof window === "undefined") return;
+        if (isOpen || loading || !hintText) return;
+        if (window.innerWidth >= 1024) return;
+
+        const timer = window.setTimeout(() => {
+            setIsHintVisible(true);
+        }, 1800);
+        return () => window.clearTimeout(timer);
+    }, [queryText, isOpen, loading, hintText]);
 
     useEffect(() => {
         if (demoSuggestions) {
@@ -152,6 +174,16 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     }, [user, currentId, queryText, activeSectionHeading, demoSuggestions]);
 
     return (
+        <>
+        {!isOpen && isHintVisible && hintSuggestion && hintText && (
+            <MobileRelatedHint
+                text={hintText}
+                onOpen={() => {
+                    setIsHintVisible(false);
+                    setIsOpen(true);
+                }}
+            />
+        )}
         <div className={railClassName}>
             <button
                 type="button"
@@ -182,7 +214,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                                     {selectedNotes.map(note => (
                                         <SuggestItem
                                             key={`selected-${note.id}`}
-                                            title={note.markdown.slice(0, 50) || "Untitled Note"}
+                                            title={extractOpeningFragment(note.markdown) || "Untitled Note"}
                                             date={note.updatedAt}
                                             checked
                                             onToggle={() => onToggleNote(note)}
@@ -203,7 +235,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                                 filteredSuggestions.map(note => (
                                     <SuggestItem
                                         key={note.id}
-                                        title={note.markdown.slice(0, 50) || "Untitled Note"}
+                                        title={extractOpeningFragment(note.markdown) || "Untitled Note"}
                                         date={note.updatedAt}
                                         checked={selectedIds.has(note.id)}
                                         onToggle={() => onToggleNote({
@@ -220,7 +252,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                     </div>
                     </div>
 
-                    {onMix && onChangeMixCategory && onAddCategory && (
+                    {selectedNotes.length > 0 && onMix && onChangeMixCategory && onAddCategory && (
                         <div className="border-t border-muted bg-white/95 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:px-4 lg:pb-3">
                             <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                                 Mix Output
@@ -246,6 +278,22 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                 </div>
             )}
         </div>
+        </>
+    );
+};
+
+const MobileRelatedHint = ({ text, onOpen }: { text: string; onOpen: () => void }) => {
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
+        <button
+            type="button"
+            onClick={onOpen}
+            className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 rounded-2xl border border-emerald-100 bg-white/95 px-4 py-3 text-left text-sm leading-relaxed text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur transition-all lg:hidden"
+        >
+            <span className="line-clamp-2">“{text}”</span>
+        </button>,
+        document.body
     );
 };
 
@@ -317,6 +365,25 @@ const MAX_TOP_TERMS = 8;
 const MAX_TOP_SENTENCES = 3;
 
 const normalizeText = (text: string): string => text.replace(/\s+/g, " ").trim();
+
+const extractOpeningFragment = (markdown: string): string => {
+    const lines = markdown
+        .replace(/!\[[^\]]*]\([^)]*\)/g, "")
+        .replace(/\[([^\]]+)]\([^)]*\)/g, "$1")
+        .split(/\n+/)
+        .map((line) => normalizeText(
+            line
+                .replace(/^#{1,6}\s+/, "")
+                .replace(/^[-*+]\s+/, "")
+                .replace(/^\d+\.\s+/, "")
+                .replace(/^>\s?/, "")
+                .replace(/^- \[[ xX]\]\s+/, "")
+        ))
+        .filter(Boolean);
+
+    const fragment = lines.find((line) => line.length >= 12) || lines[0] || "";
+    return fragment.length > 96 ? `${fragment.slice(0, 96).trim()}...` : fragment;
+};
 
 const tokenize = (text: string): string[] => {
     const matched = text.toLowerCase().match(/[a-z0-9]{2,}|[ぁ-んァ-ヶー一-龠々]{2,}/g);

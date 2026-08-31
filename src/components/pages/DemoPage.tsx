@@ -5,6 +5,7 @@ import { MainEditor } from '../editor/MainEditor';
 import { EditorHeader, SaveStatus } from '../editor/EditorHeader';
 import { useEditorContext } from '../../context/EditorContext';
 import type { DemoSuggestionMap, MixSelectableNote } from '../suggestions/SuggestRail';
+import { copyTextToClipboard } from '../../lib/clipboard';
 
 type Category = string;
 
@@ -215,6 +216,15 @@ export const DemoPage: React.FC = () => {
         });
     };
 
+    const handleCopyNote = async () => {
+        try {
+            await copyTextToClipboard(content);
+        } catch (e) {
+            console.error("Failed to copy note:", e);
+            alert("Failed to copy note.");
+        }
+    };
+
     useEffect(() => {
         if (!mixCategoryTouched) {
             setMixCategory(category);
@@ -233,6 +243,7 @@ export const DemoPage: React.FC = () => {
                     setCategory={setCategory}
                     categories={categories}
                     onAddCategory={handleAddCategory}
+                    onCopyNote={handleCopyNote}
                 />
                 }
                 selectedNotes={selectedNotes}
