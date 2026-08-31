@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Product and architecture docs
+    url: https://github.com/k5trismegistus/titanium/tree/main/docs
+    about: Review existing decisions and investigations before opening an issue.

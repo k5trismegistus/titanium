@@ -1,0 +1,29 @@
+name: Feature or improvement
+description: Propose a user-facing or technical improvement for Titanium.
+title: "feat: "
+labels: ["type: feature", "status: triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / opportunity
+      description: What user or operational problem does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe observable completion criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Include relevant UX, Firebase, cost, or data constraints.
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link related documents, issues, or source paths.
