@@ -27,7 +27,7 @@
 
 @layer components {
   .tiptap {
-    @apply w-full min-h-[40dvh] outline-none text-lg text-text leading-relaxed break-all;
+    @apply w-full min-h-[40dvh] outline-none text-lg text-text leading-relaxed break-words;
     line-height: 1.85;
   }
 
