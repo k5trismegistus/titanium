@@ -12,7 +12,11 @@
     "deploy": "npm run deploy:backend && npm run deploy:frontend",
     "deploy:backend": "firebase deploy --only functions,firestore,storage",
     "deploy:frontend": "npm run build && firebase deploy --only hosting",
-    "lint": "eslint .",
+    "lint": "eslint . --quiet",
+    "lint:all": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "preview": "vite preview",
     "reindex": "npm --prefix functions run reindex"
   },
@@ -38,13 +42,20 @@
     "tiptap-markdown": "^0.9.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.23",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.9.9",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
     "vite": "^6.4.1"
   }
 }

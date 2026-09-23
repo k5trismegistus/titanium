@@ -3,6 +3,7 @@
 A concept "Thought-Support" note-taking application powered by **Gemini** (via Vertex AI in Firebase), with **Gemini 3.0** preferred and **Gemini 2.5 Flash** as fallback.
 
 ## Features
+
 - **Clean Interface**: WYSIWYG-first editor with a Markdown toggle (raw + preview).
 - **Stable Markdown Source**: Mode switching does not rewrite note text, and single newlines are treated as line breaks.
 - **Mix**: Synthesize multiple notes into new insights using Gemini (3.0 preferred, 2.5 fallback).
@@ -12,18 +13,20 @@ A concept "Thought-Support" note-taking application powered by **Gemini** (via V
 - **Sync**: Real-time autosave to Firestore.
 
 ## Prerequisites
+
 - Node.js (v20+)
 - Firebase CLI (`npm install -g firebase-tools`)
 - A Firebase Project
 
 ## 1. Firebase Console Setup (Required)
+
 Before deploying, you must enable the following services in the [Firebase Console](https://console.firebase.google.com/):
 
 1. **Authentication**:
    - Go to **Build** > **Authentication**.
    - Click **Get Started**.
    - Enable the **Google** sign-in provider.
-   
+
 2. **Firestore Database**:
    - Go to **Build** > **Firestore Database**.
    - Click **Create Database**.
@@ -44,6 +47,7 @@ Before deploying, you must enable the following services in the [Firebase Consol
 ## 2. Local Setup
 
 1. **Install Dependencies**
+
    ```bash
    npm install
    cd functions && npm install && cd ..
@@ -58,21 +62,26 @@ Before deploying, you must enable the following services in the [Firebase Consol
 ## 3. Deployment
 
 1. **Login to Firebase**
+
    ```bash
    firebase login
    ```
 
 2. **Initialize Project**
+
    ```bash
    firebase use --add
    ```
+
    Select your project alias.
 
 3. **Deploy Backend (Functions & Rules)**
+
    ```bash
    firebase deploy --only functions,firestore,storage
    ```
-   *Note: Since we use Vertex AI with ADC (Application Default Credentials), you do NOT need to set a manual API Key secret.*
+
+   _Note: Since we use Vertex AI with ADC (Application Default Credentials), you do NOT need to set a manual API Key secret._
 
 4. **Deploy Frontend (Hosting)**
    ```bash
@@ -97,6 +106,7 @@ This application uses a strict **Whitelist** system.
 ## Development
 
 Run locally:
+
 ```bash
 npm run dev
 ```

@@ -1,4 +1,4 @@
-import { SOURCE_VECTOR_DIMENSION, VECTOR_DIMENSION } from "./vectorConfig";
+import { SOURCE_VECTOR_DIMENSION, VECTOR_DIMENSION } from './vectorConfig';
 
 const PROJECTION_SEED = 0x9e3779b9;
 const LCG_MULT = 1664525;
@@ -14,7 +14,7 @@ const buildProjectionMatrix = (): Float32Array => {
 
   for (let i = 0; i < total; i += 1) {
     state = (state * LCG_MULT + LCG_INC) >>> 0;
-    const sign = (state >>> 31) === 1 ? 1 : -1;
+    const sign = state >>> 31 === 1 ? 1 : -1;
     matrix[i] = sign * scale;
   }
 
@@ -30,7 +30,9 @@ const getProjectionMatrix = (): Float32Array => {
 
 export const applyRandomProjection = (values: number[]): number[] => {
   if (values.length !== SOURCE_VECTOR_DIMENSION) {
-    console.error(`Projection input dimension mismatch: expected ${SOURCE_VECTOR_DIMENSION}, got ${values.length}`);
+    console.error(
+      `Projection input dimension mismatch: expected ${SOURCE_VECTOR_DIMENSION}, got ${values.length}`,
+    );
     return [];
   }
 
@@ -42,7 +44,7 @@ export const applyRandomProjection = (values: number[]): number[] => {
     const rowOffset = i * SOURCE_VECTOR_DIMENSION;
     for (let j = 0; j < SOURCE_VECTOR_DIMENSION; j += 1) {
       const value = values[j];
-      if (typeof value !== "number" || !Number.isFinite(value)) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
         return [];
       }
       sum += value * matrix[rowOffset + j];

@@ -8,7 +8,7 @@ export type ActiveSection = {
 
 export const extractSectionAtCursor = (markdown: string, cursorIndex: number) => {
     if (!markdown) {
-        return { heading: "Introduction", content: "" };
+        return { heading: 'Introduction', content: '' };
     }
 
     const safeCursor = Math.max(0, Math.min(cursorIndex, markdown.length));
@@ -16,15 +16,15 @@ export const extractSectionAtCursor = (markdown: string, cursorIndex: number) =>
     const matches = Array.from(markdown.matchAll(headingRegex));
 
     if (matches.length === 0) {
-        return { heading: "Introduction", content: markdown.trim() };
+        return { heading: 'Introduction', content: markdown.trim() };
     }
 
     const firstHeadingIndex = matches[0].index ?? 0;
     if (safeCursor < firstHeadingIndex) {
         const nextStart = firstHeadingIndex;
         return {
-            heading: "Introduction",
-            content: markdown.slice(0, nextStart).trim()
+            heading: 'Introduction',
+            content: markdown.slice(0, nextStart).trim(),
         };
     }
 
@@ -36,8 +36,8 @@ export const extractSectionAtCursor = (markdown: string, cursorIndex: number) =>
 
         if (safeCursor >= start && safeCursor < nextStart) {
             const headingLine = match[0];
-            const heading = headingLine.replace(/^#+\s+/, "");
-            const lineEnd = markdown.indexOf("\n", start);
+            const heading = headingLine.replace(/^#+\s+/, '');
+            const lineEnd = markdown.indexOf('\n', start);
             const contentStart = lineEnd === -1 ? markdown.length : lineEnd + 1;
             const content = markdown.slice(contentStart, nextStart).trim();
             return { heading, content };
@@ -47,17 +47,20 @@ export const extractSectionAtCursor = (markdown: string, cursorIndex: number) =>
     const lastMatch = matches[matches.length - 1];
     const lastStart = lastMatch.index ?? 0;
     const headingLine = lastMatch[0];
-    const heading = headingLine.replace(/^#+\s+/, "");
-    const lineEnd = markdown.indexOf("\n", lastStart);
+    const heading = headingLine.replace(/^#+\s+/, '');
+    const lineEnd = markdown.indexOf('\n', lastStart);
     const contentStart = lineEnd === -1 ? markdown.length : lineEnd + 1;
     const content = markdown.slice(contentStart).trim();
     return { heading, content };
 };
 
-export const updateActiveSectionFromEditor = (editor: Editor, setActiveSection: (next: ActiveSection) => void) => {
+export const updateActiveSectionFromEditor = (
+    editor: Editor,
+    setActiveSection: (next: ActiveSection) => void,
+) => {
     const selectionFrom = editor.state.selection.from;
     const { heading, content } = extractSectionFromDoc(editor.state.doc, selectionFrom);
-    const text = [heading, content].filter(Boolean).join("\n");
+    const text = [heading, content].filter(Boolean).join('\n');
     setActiveSection({ text, heading });
 };
 
@@ -65,7 +68,11 @@ const extractSectionFromDoc = (doc: ProseMirrorNode, selectionFrom: number) => {
     const headings: Array<{ pos: number; end: number; text: string }> = [];
 
     doc.descendants((node, pos) => {
-        if (node.type.name === "heading" && typeof node.attrs.level === "number" && node.attrs.level <= 3) {
+        if (
+            node.type.name === 'heading' &&
+            typeof node.attrs.level === 'number' &&
+            node.attrs.level <= 3
+        ) {
             headings.push({ pos, end: pos + node.nodeSize, text: node.textContent });
         }
     });
@@ -74,14 +81,14 @@ const extractSectionFromDoc = (doc: ProseMirrorNode, selectionFrom: number) => {
     const safeSelection = Math.max(0, Math.min(selectionFrom, docEnd));
 
     if (headings.length === 0) {
-        return { heading: "Introduction", content: doc.textBetween(0, docEnd, "\n").trim() };
+        return { heading: 'Introduction', content: doc.textBetween(0, docEnd, '\n').trim() };
     }
 
     const firstHeading = headings[0];
     if (safeSelection < firstHeading.pos) {
         return {
-            heading: "Introduction",
-            content: doc.textBetween(0, firstHeading.pos, "\n").trim()
+            heading: 'Introduction',
+            content: doc.textBetween(0, firstHeading.pos, '\n').trim(),
         };
     }
 
@@ -91,15 +98,15 @@ const extractSectionFromDoc = (doc: ProseMirrorNode, selectionFrom: number) => {
         const sectionEnd = next ? next.pos : docEnd;
         if (safeSelection >= current.pos && safeSelection < sectionEnd) {
             return {
-                heading: current.text || "Introduction",
-                content: doc.textBetween(current.end, sectionEnd, "\n").trim()
+                heading: current.text || 'Introduction',
+                content: doc.textBetween(current.end, sectionEnd, '\n').trim(),
             };
         }
     }
 
     const lastHeading = headings[headings.length - 1];
     return {
-        heading: lastHeading.text || "Introduction",
-        content: doc.textBetween(lastHeading.end, docEnd, "\n").trim()
+        heading: lastHeading.text || 'Introduction',
+        content: doc.textBetween(lastHeading.end, docEnd, '\n').trim(),
     };
 };

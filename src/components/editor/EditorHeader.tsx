@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AlertCircle, Check, CheckCircle2, Copy, Loader2, Trash2 } from 'lucide-react';
 import { CategorySelect } from '../common/CategorySelect';
 
-export type SaveStatus = "dirty" | "saving" | "saved";
+export type SaveStatus = 'dirty' | 'saving' | 'saved';
 
 type EditorHeaderProps = {
     saveStatus: SaveStatus;
@@ -23,7 +23,7 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
     onAddCategory,
     onCopyNote,
     onDeleteNote,
-    isDeletingNote = false
+    isDeletingNote = false,
 }) => {
     const [isCopied, setIsCopied] = useState(false);
 
@@ -56,8 +56,8 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                             void handleCopy();
                         }}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100"
-                        aria-label={isCopied ? "Copied" : "Copy note"}
-                        title={isCopied ? "Copied" : "Copy note"}
+                        aria-label={isCopied ? 'Copied' : 'Copy note'}
+                        title={isCopied ? 'Copied' : 'Copy note'}
                     >
                         {isCopied ? <Check size={13} /> : <Copy size={13} />}
                     </button>
@@ -71,7 +71,11 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                         aria-label="Delete note"
                         title="Delete note"
                     >
-                        {isDeletingNote ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                        {isDeletingNote ? (
+                            <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                            <Trash2 size={12} />
+                        )}
                     </button>
                 )}
                 <SaveIndicator status={saveStatus} />
@@ -81,19 +85,20 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
 };
 
 const SaveIndicator = ({ status }: { status: SaveStatus }) => {
-    const label = status === "saving" ? "Saving..." : status === "dirty" ? "Unsaved" : "Saved";
-    const baseClass = "flex h-8 w-8 items-center justify-center rounded-lg border";
-    const toneClass = status === "dirty"
-        ? "text-amber-700 bg-amber-50 border-amber-200"
-        : status === "saving"
-            ? "text-blue-700 bg-blue-50 border-blue-200"
-            : "text-green-700 bg-green-50 border-green-200";
+    const label = status === 'saving' ? 'Saving...' : status === 'dirty' ? 'Unsaved' : 'Saved';
+    const baseClass = 'flex h-8 w-8 items-center justify-center rounded-lg border';
+    const toneClass =
+        status === 'dirty'
+            ? 'text-amber-700 bg-amber-50 border-amber-200'
+            : status === 'saving'
+              ? 'text-blue-700 bg-blue-50 border-blue-200'
+              : 'text-green-700 bg-green-50 border-green-200';
 
     return (
         <div className={`${baseClass} ${toneClass}`} title={label} aria-label={label} role="status">
-            {status === "saving" ? (
+            {status === 'saving' ? (
                 <Loader2 className="animate-spin" size={14} />
-            ) : status === "dirty" ? (
+            ) : status === 'dirty' ? (
                 <AlertCircle size={14} />
             ) : (
                 <CheckCircle2 size={14} />

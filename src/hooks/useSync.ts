@@ -1,11 +1,11 @@
-import { useEffect, useState, useRef } from "react";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase/config";
-import { useAuth } from "../lib/firebase/auth";
+import { useEffect, useState, useRef } from 'react';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase/config';
+import { useAuth } from '../lib/firebase/auth';
 
 // MVP Strategy: Single persistent note for the user (Scratchpad)
 // In a full app, this would take a noteId argument.
-export const useSync = (noteId: string, initialContent: string, initialCategory: string = "") => {
+export const useSync = (noteId: string, initialContent: string, initialCategory: string = '') => {
     const { user } = useAuth();
     const [content, setContent] = useState(initialContent);
     const [isSaving, setIsSaving] = useState(false);
@@ -21,24 +21,24 @@ export const useSync = (noteId: string, initialContent: string, initialCategory:
         const loadNote = async () => {
             try {
                 // noteId should be passed directly if it's not scratchpad logic
-                // if noteId is "scratchpad", we use `scratchpad-${uid}`. 
+                // if noteId is "scratchpad", we use `scratchpad-${uid}`.
                 // But since we are moving to proper routing, we assume noteId is the docId.
                 // However, for backward compat with "scratchpad", handle it.
 
                 const docId = noteId === 'scratchpad' ? `scratchpad-${user.uid}` : noteId;
-                const noteRef = doc(db, "notes", docId);
+                const noteRef = doc(db, 'notes', docId);
 
                 const noteDoc = await getDoc(noteRef);
                 if (noteDoc.exists()) {
                     const data = noteDoc.data();
-                    setContent(data.markdown || "");
-                    setLastSavedContent(data.markdown || "");
+                    setContent(data.markdown || '');
+                    setLastSavedContent(data.markdown || '');
                     const nextCategory = data.category || initialCategory;
                     setCategory(nextCategory);
                     setLastSavedCategory(nextCategory);
                 }
             } catch (e) {
-                console.error("Failed to load note:", e);
+                console.error('Failed to load note:', e);
             } finally {
                 isFirstLoad.current = false;
             }
@@ -56,19 +56,23 @@ export const useSync = (noteId: string, initialContent: string, initialCategory:
             setIsSaving(true);
             try {
                 const docId = noteId === 'scratchpad' ? `scratchpad-${user.uid}` : noteId;
-                const noteRef = doc(db, "notes", docId);
-                await setDoc(noteRef, {
-                    markdown: content,
-                    category: category,
-                    userId: user.uid,
-                    updatedAt: serverTimestamp(),
-                }, { merge: true });
+                const noteRef = doc(db, 'notes', docId);
+                await setDoc(
+                    noteRef,
+                    {
+                        markdown: content,
+                        category: category,
+                        userId: user.uid,
+                        updatedAt: serverTimestamp(),
+                    },
+                    { merge: true },
+                );
 
                 setLastSavedContent(content);
                 setLastSavedCategory(category);
-                console.log("Saved to Firestore.");
+                console.log('Saved to Firestore.');
             } catch (e) {
-                console.error("Failed to save note:", e);
+                console.error('Failed to save note:', e);
             } finally {
                 setIsSaving(false);
             }
@@ -77,5 +81,13 @@ export const useSync = (noteId: string, initialContent: string, initialCategory:
         return () => clearTimeout(timer);
     }, [content, category, user, lastSavedContent, lastSavedCategory, noteId]);
 
-    return { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory };
+    return {
+        content,
+        setContent,
+        isSaving,
+        category,
+        setCategory,
+        lastSavedContent,
+        lastSavedCategory,
+    };
 };

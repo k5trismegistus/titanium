@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../lib/firebase/config";
-import { useAuth } from "../lib/firebase/auth";
+import { useEffect, useState } from 'react';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase/config';
+import { useAuth } from '../lib/firebase/auth';
 
-const DEFAULT_CATEGORIES = ["Memo", "Blog", "Qiita", "Twitter"];
+const DEFAULT_CATEGORIES = ['Memo', 'Blog', 'Qiita', 'Twitter'];
 
 const normalizeCategory = (value: unknown): string => {
-    if (typeof value !== "string") return "";
+    if (typeof value !== 'string') return '';
     return value.trim();
 };
 
@@ -42,7 +42,7 @@ export const useUserCategories = () => {
                 return;
             }
 
-            const userRef = doc(db, "users", user.uid);
+            const userRef = doc(db, 'users', user.uid);
 
             try {
                 const snapshot = await getDoc(userRef);
@@ -60,9 +60,9 @@ export const useUserCategories = () => {
                             userRef,
                             {
                                 categories: DEFAULT_CATEGORIES,
-                                updatedAt: serverTimestamp()
+                                updatedAt: serverTimestamp(),
                             },
-                            { merge: true }
+                            { merge: true },
                         );
                     }
                 } else {
@@ -70,11 +70,11 @@ export const useUserCategories = () => {
                     await setDoc(userRef, {
                         categories: DEFAULT_CATEGORIES,
                         createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp()
+                        updatedAt: serverTimestamp(),
                     });
                 }
             } catch (error) {
-                console.error("Failed to load user categories:", error);
+                console.error('Failed to load user categories:', error);
                 if (isActive) {
                     setCategories(DEFAULT_CATEGORIES);
                 }
@@ -97,26 +97,24 @@ export const useUserCategories = () => {
         const trimmed = normalizeCategory(rawCategory);
         if (!trimmed) return null;
 
-        const existing = categories.find(
-            (item) => item.toLowerCase() === trimmed.toLowerCase()
-        );
+        const existing = categories.find((item) => item.toLowerCase() === trimmed.toLowerCase());
         if (existing) return existing;
 
         const nextCategories = [...categories, trimmed];
         setCategories(nextCategories);
 
         try {
-            const userRef = doc(db, "users", user.uid);
+            const userRef = doc(db, 'users', user.uid);
             await setDoc(
                 userRef,
                 {
                     categories: nextCategories,
-                    updatedAt: serverTimestamp()
+                    updatedAt: serverTimestamp(),
                 },
-                { merge: true }
+                { merge: true },
             );
         } catch (error) {
-            console.error("Failed to add category:", error);
+            console.error('Failed to add category:', error);
         }
 
         return trimmed;

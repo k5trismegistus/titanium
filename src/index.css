@@ -35,7 +35,7 @@
     @apply my-0;
   }
 
-  .tiptap p[data-blank-line="true"] {
+  .tiptap p[data-blank-line='true'] {
     min-height: calc(1.75rem * var(--blank-line-count, 1));
   }
 
@@ -61,21 +61,21 @@
   }
 
   .tiptap h1::before {
-    content: "# ";
+    content: '# ';
     color: #cbd5e1;
     margin-right: 0.5rem;
     font-weight: 400;
   }
 
   .tiptap h2::before {
-    content: "## ";
+    content: '## ';
     color: #cbd5e1;
     margin-right: 0.5rem;
     font-weight: 400;
   }
 
   .tiptap h3::before {
-    content: "### ";
+    content: '### ';
     color: #cbd5e1;
     margin-right: 0.5rem;
     font-weight: 400;
@@ -97,19 +97,19 @@
     @apply border-l-2 border-gray-200 pl-3 italic text-gray-700;
   }
 
-  .tiptap ul[data-type="taskList"] {
+  .tiptap ul[data-type='taskList'] {
     @apply list-none pl-0;
   }
 
-  .tiptap ul[data-type="taskList"] li {
+  .tiptap ul[data-type='taskList'] li {
     @apply flex items-start gap-2;
   }
 
-  .tiptap ul[data-type="taskList"] li > label {
+  .tiptap ul[data-type='taskList'] li > label {
     @apply mt-1;
   }
 
-  .tiptap ul[data-type="taskList"] li > div {
+  .tiptap ul[data-type='taskList'] li > div {
     @apply flex-1;
   }
 
@@ -130,7 +130,7 @@
   input,
   select,
   textarea,
-  [contenteditable="true"] {
+  [contenteditable='true'] {
     font-size: 16px;
   }
 }
@@ -161,5 +161,9 @@
   word-wrap: normal;
   direction: ltr;
   -webkit-font-smoothing: antialiased;
-  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 24;
 }

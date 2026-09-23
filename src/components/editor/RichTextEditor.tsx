@@ -8,59 +8,67 @@ import TaskList from '@tiptap/extension-task-list';
 import { TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import { Markdown } from 'tiptap-markdown';
-import { getEditorMarkdown, prepareMarkdownForRichEditor, TitaniumHardBreak, TitaniumParagraph } from './editorMarkdown';
+import {
+    getEditorMarkdown,
+    prepareMarkdownForRichEditor,
+    TitaniumHardBreak,
+    TitaniumParagraph,
+} from './editorMarkdown';
 import { ActiveSection, updateActiveSectionFromEditor } from './editorSections';
 
 export const RichTextEditor = ({
     content,
     setContent,
     readOnly,
-    setActiveSection
+    setActiveSection,
 }: {
     content: string;
     setContent: (next: string) => void;
     readOnly: boolean;
     setActiveSection: (next: ActiveSection) => void;
 }) => {
-    const extensions = useMemo(() => [
-        StarterKit.configure({
-            heading: { levels: [1, 2, 3] },
-            hardBreak: false,
-            paragraph: false
-        }),
-        TitaniumParagraph,
-        TitaniumHardBreak,
-        TaskList,
-        TaskItem.configure({ nested: true }),
-        Image,
-        Placeholder.configure({
-            placeholder: "Start writing..."
-        }),
-        Markdown.configure({
-            html: false,
-            bulletListMarker: "-",
-            breaks: true,
-            transformPastedText: false,
-            transformCopiedText: true
-        })
-    ], []);
+    const extensions = useMemo(
+        () => [
+            StarterKit.configure({
+                heading: { levels: [1, 2, 3] },
+                hardBreak: false,
+                paragraph: false,
+            }),
+            TitaniumParagraph,
+            TitaniumHardBreak,
+            TaskList,
+            TaskItem.configure({ nested: true }),
+            Image,
+            Placeholder.configure({
+                placeholder: 'Start writing...',
+            }),
+            Markdown.configure({
+                html: false,
+                bulletListMarker: '-',
+                breaks: true,
+                transformPastedText: false,
+                transformCopiedText: true,
+            }),
+        ],
+        [],
+    );
 
     const editor = useEditor({
         extensions,
-        content: prepareMarkdownForRichEditor(content || ""),
+        content: prepareMarkdownForRichEditor(content || ''),
         editable: !readOnly,
         editorProps: {
             attributes: {
-                class: "tiptap"
+                class: 'tiptap',
             },
             handleDOMEvents: {
                 pointerdown: (view, event) => {
                     const pointerEvent = event as PointerEvent;
-                    if (pointerEvent.pointerType !== "touch") return false;
+                    if (pointerEvent.pointerType !== 'touch') return false;
 
                     const position = view.posAtCoords({
                         left: pointerEvent.clientX,
-                        top: pointerEvent.clientY
+                        top: pointerEvent.clientY,
                     });
                     if (!position) return false;
 
@@ -68,8 +76,8 @@ export const RichTextEditor = ({
                     restoreTouchSelection(view, position.pos);
 
                     return true;
-                }
-            }
+                },
+            },
         },
         onUpdate: ({ editor, transaction }) => {
             if (!transaction.docChanged || !editor.isFocused) {
@@ -81,7 +89,7 @@ export const RichTextEditor = ({
         },
         onSelectionUpdate: ({ editor }) => {
             updateActiveSectionFromEditor(editor, setActiveSection);
-        }
+        },
     });
 
     useEffect(() => {
@@ -94,7 +102,9 @@ export const RichTextEditor = ({
         if (editor.isFocused) return;
         const markdown = getEditorMarkdown(editor);
         if (content !== markdown) {
-            editor.commands.setContent(prepareMarkdownForRichEditor(content || ""), { emitUpdate: false });
+            editor.commands.setContent(prepareMarkdownForRichEditor(content || ''), {
+                emitUpdate: false,
+            });
             updateActiveSectionFromEditor(editor, setActiveSection);
         }
     }, [content, editor, setActiveSection]);

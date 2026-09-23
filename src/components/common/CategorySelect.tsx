@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const ADD_OPTION_VALUE = "__add__";
+const ADD_OPTION_VALUE = '__add__';
 
 type CategorySelectProps = {
     value: string;
@@ -17,23 +17,23 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     options,
     onChange,
     onAdd,
-    className = "",
-    selectClassName = "",
-    inputClassName = ""
+    className = '',
+    selectClassName = '',
+    inputClassName = '',
 }) => {
-    const [draftCategory, setDraftCategory] = useState("");
+    const [draftCategory, setDraftCategory] = useState('');
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const trimmedValue = value.trim();
     const cleanOptions = options.map((item) => item.trim()).filter((item) => item.length > 0);
-    const hasCurrent = trimmedValue.length > 0 &&
+    const hasCurrent =
+        trimmedValue.length > 0 &&
         cleanOptions.some((item) => item.toLowerCase() === trimmedValue.toLowerCase());
-    const resolvedOptions = hasCurrent || trimmedValue.length === 0
-        ? cleanOptions
-        : [trimmedValue, ...cleanOptions];
+    const resolvedOptions =
+        hasCurrent || trimmedValue.length === 0 ? cleanOptions : [trimmedValue, ...cleanOptions];
 
     useEffect(() => {
         if (!isAddingCategory) {
-            setDraftCategory("");
+            setDraftCategory('');
         }
     }, [isAddingCategory]);
 
@@ -58,7 +58,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         if (!nextValue) return;
 
         const match = resolvedOptions.find(
-            (item) => item.toLowerCase() === nextValue.toLowerCase()
+            (item) => item.toLowerCase() === nextValue.toLowerCase(),
         );
         if (match) {
             onChange(match);
@@ -67,7 +67,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             onAdd(nextValue);
         }
 
-        setDraftCategory("");
+        setDraftCategory('');
         setIsAddingCategory(false);
     };
 
@@ -92,11 +92,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                         value={draftCategory}
                         onChange={(e) => setDraftCategory(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter") {
+                            if (e.key === 'Enter') {
                                 handleAddCategory();
                             }
-                            if (e.key === "Escape") {
-                                setDraftCategory("");
+                            if (e.key === 'Escape') {
+                                setDraftCategory('');
                                 setIsAddingCategory(false);
                             }
                         }}
@@ -115,7 +115,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     <button
                         type="button"
                         onClick={() => {
-                            setDraftCategory("");
+                            setDraftCategory('');
                             setIsAddingCategory(false);
                         }}
                         className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-600"

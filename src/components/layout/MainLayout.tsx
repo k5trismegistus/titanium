@@ -34,27 +34,25 @@ export const MainLayout = ({
     onAddCategory,
     onMix,
     isMixing,
-    isMixAllowed
+    isMixAllowed,
 }: MainLayoutProps) => {
     const [isSuggestOpen, setIsSuggestOpen] = useState(() => {
-        if (typeof window === "undefined") return true;
+        if (typeof window === 'undefined') return true;
         return window.innerWidth >= 1024;
     });
 
     return (
-    <EditorProvider>
+        <EditorProvider>
             <div
                 className="min-h-[100svh] bg-white"
                 style={{
-                    ["--global-header-height" as string]: "3.5rem",
-                    ["--editor-header-height" as string]: editorHeader ? "3rem" : "0px"
+                    ['--global-header-height' as string]: '3.5rem',
+                    ['--editor-header-height' as string]: editorHeader ? '3rem' : '0px',
                 }}
             >
                 {editorHeader && (
                     <div className="sticky top-14 z-40 flex items-center border-b border-muted bg-white/95 backdrop-blur">
-                        <div className="min-w-0 flex-1">
-                            {editorHeader}
-                        </div>
+                        <div className="min-w-0 flex-1">{editorHeader}</div>
                         <button
                             type="button"
                             onClick={() => setIsSuggestOpen(true)}
@@ -67,9 +65,7 @@ export const MainLayout = ({
                     </div>
                 )}
                 <div className="flex min-h-[calc(100svh-3.5rem)] items-start">
-                    <main className="min-w-0 flex-1 px-4 py-8 lg:pr-8">
-                        {children}
-                    </main>
+                    <main className="min-w-0 flex-1 px-4 py-8 lg:pr-8">{children}</main>
                     <aside className="shrink-0">
                         <SuggestRail
                             selectedNotes={selectedNotes}

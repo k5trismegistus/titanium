@@ -1,0 +1,8 @@
+dist/
+functions/lib/
+node_modules/
+functions/node_modules/
+rss_markdown/
+.firebase/
+package-lock.json
+functions/package-lock.json

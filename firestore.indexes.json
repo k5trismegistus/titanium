@@ -1,111 +1,111 @@
 {
-    "indexes": [
+  "indexes": [
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION",
+      "fields": [
         {
-            "collectionGroup": "notes",
-            "queryScope": "COLLECTION",
-            "fields": [
-                {
-                    "fieldPath": "userId",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "updatedAt",
-                    "order": "DESCENDING"
-                }
-            ]
+          "fieldPath": "userId",
+          "order": "ASCENDING"
         },
         {
-            "collectionGroup": "sections",
-            "queryScope": "COLLECTION_GROUP",
-            "fields": [
-                {
-                    "fieldPath": "userId",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "__name__",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "embedding",
-                    "vectorConfig": {
-                        "dimension": 2048,
-                        "flat": {}
-                    }
-                }
-            ]
-        },
-        {
-            "collectionGroup": "notes",
-            "queryScope": "COLLECTION",
-            "fields": [
-                {
-                    "fieldPath": "userId",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "__name__",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "embedding",
-                    "vectorConfig": {
-                        "dimension": 2048,
-                        "flat": {}
-                    }
-                }
-            ]
-        },
-        {
-            "collectionGroup": "salientItems",
-            "queryScope": "COLLECTION_GROUP",
-            "fields": [
-                {
-                    "fieldPath": "userId",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "__name__",
-                    "order": "ASCENDING"
-                },
-                {
-                    "fieldPath": "embedding",
-                    "vectorConfig": {
-                        "dimension": 2048,
-                        "flat": {}
-                    }
-                }
-            ]
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
         }
-    ],
-    "fieldOverrides": [
+      ]
+    },
+    {
+      "collectionGroup": "sections",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
         {
-            "collectionGroup": "sections",
-            "fieldPath": "userId",
-            "indexes": [
-                {
-                    "order": "ASCENDING",
-                    "queryScope": "COLLECTION_GROUP"
-                },
-                {
-                    "order": "DESCENDING",
-                    "queryScope": "COLLECTION_GROUP"
-                }
-            ]
+          "fieldPath": "userId",
+          "order": "ASCENDING"
         },
         {
-            "collectionGroup": "salientItems",
-            "fieldPath": "userId",
-            "indexes": [
-                {
-                    "order": "ASCENDING",
-                    "queryScope": "COLLECTION_GROUP"
-                },
-                {
-                    "order": "DESCENDING",
-                    "queryScope": "COLLECTION_GROUP"
-                }
-            ]
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": {
+            "dimension": 2048,
+            "flat": {}
+          }
         }
-    ]
+      ]
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": {
+            "dimension": 2048,
+            "flat": {}
+          }
+        }
+      ]
+    },
+    {
+      "collectionGroup": "salientItems",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": {
+            "dimension": 2048,
+            "flat": {}
+          }
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "sections",
+      "fieldPath": "userId",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "salientItems",
+      "fieldPath": "userId",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    }
+  ]
 }

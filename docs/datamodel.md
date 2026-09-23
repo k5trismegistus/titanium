@@ -12,7 +12,7 @@
 - 章（section）は h1 単位
 - Embedding更新は非同期
 - Mixは「新しいノート候補テキストを生成するだけ」
-    - 参照関係・履歴は保持しない
+  - 参照関係・履歴は保持しない
 - UXは後回し（データ整合性と単純さを優先）
 
 ---
@@ -107,8 +107,8 @@ embeddingPending:boolean// 非同期更新中フラグ
 2. Cloud Functions が Markdown をパース
 3. h1単位で sections を再構築
 4. 各 section について：
-    - heading / content / order を更新
-    - 内容が変わった section のみ `embeddingPending = true`
+   - heading / content / order を更新
+   - 内容が変わった section のみ `embeddingPending = true`
 5. noteEmbedding は毎回更新
 6. sectionIndex を notes に同期
 
@@ -119,24 +119,24 @@ embeddingPending:boolean// 非同期更新中フラグ
 ### 種類
 
 - **noteEmbedding**
-    - ノート全体の意味
-    - ノート × ノート類似用
-    - 保存ごとに毎回更新
+  - ノート全体の意味
+  - ノート × ノート類似用
+  - 保存ごとに毎回更新
 - **section.embedding**
-    - 編集中サジェスト / 類似章提示用
-    - h1単位
-    - 差分があった章のみ非同期更新
+  - 編集中サジェスト / 類似章提示用
+  - h1単位
+  - 差分があった章のみ非同期更新
 
 ---
 
 ## 非同期更新による不整合の扱い
 
 - 古いEmbedding経由で
-    - 存在しない sectionId が参照される可能性はある
+  - 存在しない sectionId が参照される可能性はある
 - その場合：
-    - ノートは必ず開く
-    - セクションジャンプはしない
-    - 「この章は削除されました」アラートのみ表示
+  - ノートは必ず開く
+  - セクションジャンプはしない
+  - 「この章は削除されました」アラートのみ表示
 - deprecated / tombstone は保持しない
 
 ---
@@ -144,11 +144,11 @@ embeddingPending:boolean// 非同期更新中フラグ
 ## Mix機能の扱い（明確な割り切り）
 
 - Mixは以下のみを行う：
-    - 複数 section / note から
-    - 新しいノート候補テキストを生成
+  - 複数 section / note から
+  - 新しいノート候補テキストを生成
 - フロント側で：
-    - 良ければ通常ノートとして保存
-    - 不要なら保存しない
+  - 良ければ通常ノートとして保存
+  - 不要なら保存しない
 - 元ノート・元sectionへの参照は一切保持しない
 
 ---

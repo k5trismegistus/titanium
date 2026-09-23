@@ -10,13 +10,20 @@ The product and architecture decisions live in [`docs/`](./docs/).
 
 - Start by checking `git status --short --branch`; do not discard or reformat
   existing user changes.
+- GitHub Projects is the task record: [Titanium 開発](https://github.com/users/k5trismegistus/projects/5).
+  Check related Project items and Issues before work. The Todo / In Progress / Done board is
+  intentionally managed by hand; do not bulk import Issues or enable automatic addition.
+  Create or change an item only when it is needed for the requested work. Pull requests are
+  optional for this solo project.
 - Keep changes scoped to the request. Read the closest implementation and its
   tests before changing behavior.
 - Use TypeScript with the existing strict compiler settings. Do not add a
   dependency when the current stack can meet the need.
 - Run the narrowest relevant checks first. For frontend changes, use
   `npm run lint` and `npm run build`; for Functions changes, use
-  `npm --prefix functions run build`.
+  `npm --prefix functions run build`. Use `npm run format:check` to verify
+  formatting, `npm run format` to apply it, and `npm run lint:all` to see
+  migration warnings hidden by the default lint command.
 - Update the corresponding document in `docs/` when a user-visible behavior,
   data model, or architectural decision changes.
 
@@ -46,6 +53,7 @@ The product and architecture decisions live in [`docs/`](./docs/).
 ```bash
 npm run dev
 npm run lint
+npm run format:check
 npm run build
 npm --prefix functions run build
 ```

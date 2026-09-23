@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 type EditorContextValue = {
     activeSectionText: string;
@@ -9,8 +9,8 @@ type EditorContextValue = {
 const EditorContext = createContext<EditorContextValue | null>(null);
 
 export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
-    const [activeSectionText, setActiveSectionText] = useState("");
-    const [activeSectionHeading, setActiveSectionHeading] = useState("");
+    const [activeSectionText, setActiveSectionText] = useState('');
+    const [activeSectionHeading, setActiveSectionHeading] = useState('');
 
     useEffect(() => {
         if (!import.meta.env.DEV) return;
@@ -18,14 +18,17 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
         console.log(`[editor] active section heading="${activeSectionHeading}" text="${preview}"`);
     }, [activeSectionText, activeSectionHeading]);
 
-    const value = useMemo<EditorContextValue>(() => ({
-        activeSectionText,
-        activeSectionHeading,
-        setActiveSection: ({ text, heading }) => {
-            setActiveSectionText(text);
-            setActiveSectionHeading(heading);
-        }
-    }), [activeSectionText, activeSectionHeading]);
+    const value = useMemo<EditorContextValue>(
+        () => ({
+            activeSectionText,
+            activeSectionHeading,
+            setActiveSection: ({ text, heading }) => {
+                setActiveSectionText(text);
+                setActiveSectionHeading(heading);
+            },
+        }),
+        [activeSectionText, activeSectionHeading],
+    );
 
     return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
 };
@@ -33,7 +36,7 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
 export const useEditorContext = () => {
     const context = useContext(EditorContext);
     if (!context) {
-        throw new Error("useEditorContext must be used within EditorProvider");
+        throw new Error('useEditorContext must be used within EditorProvider');
     }
     return context;
 };

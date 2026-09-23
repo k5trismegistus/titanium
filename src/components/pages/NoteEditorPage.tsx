@@ -15,23 +15,31 @@ import type { MixSelectableNote } from '../suggestions/SuggestRail';
 
 export const NoteEditorPage: React.FC = () => {
     const { noteId } = useParams<{ noteId: string }>();
-    const resolvedNoteId = noteId || "scratchpad";
+    const resolvedNoteId = noteId || 'scratchpad';
     const { user, isAllowed } = useAuth();
     const navigate = useNavigate();
     const [selectedNotes, setSelectedNotes] = useState<MixSelectableNote[]>([]);
     const [isMixing, setIsMixing] = useState(false);
-    const [mixResult, setMixResult] = useState("");
+    const [mixResult, setMixResult] = useState('');
     const [isMixModalOpen, setIsMixModalOpen] = useState(false);
     const [isSavingMix, setIsSavingMix] = useState(false);
     const [isDeletingNote, setIsDeletingNote] = useState(false);
 
     const { categories, addCategory, isLoading: isCategoriesLoading } = useUserCategories();
-    const defaultCategory = categories[0] || "Memo";
+    const defaultCategory = categories[0] || 'Memo';
     const [mixCategory, setMixCategory] = useState(defaultCategory);
     const [mixCategoryTouched, setMixCategoryTouched] = useState(false);
-    const { content, setContent, isSaving, category, setCategory, lastSavedContent, lastSavedCategory } = useSync(resolvedNoteId, "", defaultCategory);
+    const {
+        content,
+        setContent,
+        isSaving,
+        category,
+        setCategory,
+        lastSavedContent,
+        lastSavedCategory,
+    } = useSync(resolvedNoteId, '', defaultCategory);
     const hasUnsavedChanges = content !== lastSavedContent || category !== lastSavedCategory;
-    const saveStatus: SaveStatus = isSaving ? "saving" : hasUnsavedChanges ? "dirty" : "saved";
+    const saveStatus: SaveStatus = isSaving ? 'saving' : hasUnsavedChanges ? 'dirty' : 'saved';
     useEffect(() => {
         if (isCategoriesLoading) return;
         if (!lastSavedCategory) return;
@@ -49,10 +57,10 @@ export const NoteEditorPage: React.FC = () => {
     }, [category, defaultCategory, mixCategoryTouched]);
 
     const toggleNote = (note: MixSelectableNote) => {
-        setSelectedNotes(prev =>
+        setSelectedNotes((prev) =>
             prev.some((item) => item.id === note.id)
-                ? prev.filter(item => item.id !== note.id)
-                : [...prev, note]
+                ? prev.filter((item) => item.id !== note.id)
+                : [...prev, note],
         );
     };
 
@@ -61,19 +69,20 @@ export const NoteEditorPage: React.FC = () => {
         setIsMixing(true);
         try {
             const targetIds = selectedNotes.map((note) => note.id);
-            const resolvedId = resolvedNoteId === "scratchpad" ? `scratchpad-${user.uid}` : resolvedNoteId;
+            const resolvedId =
+                resolvedNoteId === 'scratchpad' ? `scratchpad-${user.uid}` : resolvedNoteId;
             if (resolvedId) targetIds.push(resolvedId);
 
             const uniqueIds = Array.from(new Set(targetIds));
             if (uniqueIds.length === 0) {
-                alert("Please select at least one note (or be in a note) to mix.");
+                alert('Please select at least one note (or be in a note) to mix.');
                 return;
             }
 
             const result = await mix({
                 noteIds: uniqueIds,
                 category: mixCategory,
-                baseNoteId: resolvedId
+                baseNoteId: resolvedId,
             });
             const mixedMarkdown = (result.data as any).markdown;
 
@@ -82,8 +91,8 @@ export const NoteEditorPage: React.FC = () => {
                 setIsMixModalOpen(true);
             }
         } catch (e) {
-            console.error("Mix failed:", e);
-            alert("Mix failed. See console.");
+            console.error('Mix failed:', e);
+            alert('Mix failed. See console.');
         } finally {
             setIsMixing(false);
         }
@@ -93,19 +102,19 @@ export const NoteEditorPage: React.FC = () => {
         if (!user || !mixResult) return;
         setIsSavingMix(true);
         try {
-            const docRef = await addDoc(collection(db, "notes"), {
+            const docRef = await addDoc(collection(db, 'notes'), {
                 userId: user.uid,
                 markdown: mixResult,
                 category: mixCategory,
                 updatedAt: serverTimestamp(),
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
             });
             setIsMixModalOpen(false);
-            setMixResult("");
+            setMixResult('');
             navigate(`/note/${docRef.id}`);
         } catch (e) {
-            console.error("Failed to save mixed note:", e);
-            alert("Failed to save mixed note.");
+            console.error('Failed to save mixed note:', e);
+            alert('Failed to save mixed note.');
         } finally {
             setIsSavingMix(false);
         }
@@ -113,19 +122,19 @@ export const NoteEditorPage: React.FC = () => {
 
     const handleDeleteNote = async () => {
         if (!user || isDeletingNote) return;
-        const docId = resolvedNoteId === "scratchpad" ? `scratchpad-${user.uid}` : resolvedNoteId;
+        const docId = resolvedNoteId === 'scratchpad' ? `scratchpad-${user.uid}` : resolvedNoteId;
         if (!docId) return;
 
-        const shouldDelete = window.confirm("Delete this note? This action cannot be undone.");
+        const shouldDelete = window.confirm('Delete this note? This action cannot be undone.');
         if (!shouldDelete) return;
 
         setIsDeletingNote(true);
         try {
-            await deleteDoc(doc(db, "notes", docId));
-            navigate("/");
+            await deleteDoc(doc(db, 'notes', docId));
+            navigate('/');
         } catch (e) {
-            console.error("Failed to delete note:", e);
-            alert("Failed to delete note.");
+            console.error('Failed to delete note:', e);
+            alert('Failed to delete note.');
         } finally {
             setIsDeletingNote(false);
         }
@@ -135,8 +144,8 @@ export const NoteEditorPage: React.FC = () => {
         try {
             await copyTextToClipboard(content);
         } catch (e) {
-            console.error("Failed to copy note:", e);
-            alert("Failed to copy note.");
+            console.error('Failed to copy note:', e);
+            alert('Failed to copy note.');
         }
     };
 
@@ -206,7 +215,7 @@ export const NoteEditorPage: React.FC = () => {
                                 disabled={isSavingMix || !mixResult}
                                 type="button"
                             >
-                                {isSavingMix ? "Saving..." : "Save as new note"}
+                                {isSavingMix ? 'Saving...' : 'Save as new note'}
                             </button>
                         </div>
                     </div>

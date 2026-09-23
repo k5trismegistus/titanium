@@ -5,15 +5,19 @@ import { extractSectionAtCursor } from './editorSections';
 import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor } from './RichTextEditor';
 
-export const MainEditor: React.FC<{ content: string; setContent: (next: string) => void; readOnly?: boolean }> = ({ content, setContent, readOnly = false }) => {
+export const MainEditor: React.FC<{
+    content: string;
+    setContent: (next: string) => void;
+    readOnly?: boolean;
+}> = ({ content, setContent, readOnly = false }) => {
     const { setActiveSection } = useEditorContext();
     const [cursorIndex, setCursorIndex] = useState(0);
-    const [editorMode, setEditorMode] = useState<"rich" | "markdown">("rich");
+    const [editorMode, setEditorMode] = useState<'rich' | 'markdown'>('rich');
 
     useEffect(() => {
-        if (editorMode !== "markdown") return;
+        if (editorMode !== 'markdown') return;
         const { heading, content: sectionContent } = extractSectionAtCursor(content, cursorIndex);
-        const text = [heading, sectionContent].filter(Boolean).join("\n");
+        const text = [heading, sectionContent].filter(Boolean).join('\n');
         setActiveSection({ text, heading });
     }, [content, cursorIndex, editorMode, setActiveSection]);
 
@@ -23,18 +27,18 @@ export const MainEditor: React.FC<{ content: string; setContent: (next: string) 
                 <div className="inline-flex items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-0.5 text-xs">
                     <ModeButton
                         label="WYSIWYG"
-                        isActive={editorMode === "rich"}
-                        onClick={() => setEditorMode("rich")}
+                        isActive={editorMode === 'rich'}
+                        onClick={() => setEditorMode('rich')}
                     />
                     <ModeButton
                         label="Markdown"
-                        isActive={editorMode === "markdown"}
-                        onClick={() => setEditorMode("markdown")}
+                        isActive={editorMode === 'markdown'}
+                        onClick={() => setEditorMode('markdown')}
                     />
                 </div>
             </div>
 
-            {editorMode === "markdown" ? (
+            {editorMode === 'markdown' ? (
                 <MarkdownEditor
                     content={content}
                     setContent={setContent}

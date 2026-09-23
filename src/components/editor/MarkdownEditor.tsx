@@ -2,7 +2,7 @@ export const MarkdownEditor = ({
     content,
     setContent,
     readOnly,
-    onCursorChange
+    onCursorChange,
 }: {
     content: string;
     setContent: (next: string) => void;

@@ -43,125 +43,125 @@ Mix結果の保存後に、生成ノートが増える導線を見せる。
 `;
 
 const DEMO_SUGGESTIONS: DemoSuggestionMap = {
-    'デモの見どころ': [
+    デモの見どころ: [
         {
             id: 'demo-ui-1',
             markdown: 'WYSIWYGとMarkdownを両立させる編集設計',
             updatedAt: new Date('2024-02-15'),
-            score: 0.9
+            score: 0.9,
         },
         {
             id: 'demo-ui-2',
             markdown: '見出し記号を残して文脈を保つUI',
             updatedAt: new Date('2024-02-09'),
-            score: 0.86
+            score: 0.86,
         },
         {
             id: 'demo-ui-3',
             markdown: 'デモで理解させる最小の説明量',
             updatedAt: new Date('2024-01-27'),
-            score: 0.82
-        }
+            score: 0.82,
+        },
     ],
-    '問いの核': [
+    問いの核: [
         {
             id: 'demo-focus-1',
             markdown: '思考の熱量を落とさないUIの作り方',
             updatedAt: new Date('2024-02-08'),
-            score: 0.92
+            score: 0.92,
         },
         {
             id: 'demo-focus-2',
             markdown: '文脈ベースの連想で発想を拡張する',
             updatedAt: new Date('2024-01-29'),
-            score: 0.88
+            score: 0.88,
         },
         {
             id: 'demo-focus-3',
             markdown: 'メモ探索の摩擦をどう減らすか',
             updatedAt: new Date('2023-12-18'),
-            score: 0.83
-        }
+            score: 0.83,
+        },
     ],
-    '観察されたサイン': [
+    観察されたサイン: [
         {
             id: 'demo-signal-1',
             markdown: '集中が切れるタイミングの分析メモ',
             updatedAt: new Date('2024-02-01'),
-            score: 0.9
+            score: 0.9,
         },
         {
             id: 'demo-signal-2',
             markdown: '関連アイデアの再利用を促す仕掛け',
             updatedAt: new Date('2024-01-20'),
-            score: 0.86
+            score: 0.86,
         },
         {
             id: 'demo-signal-3',
             markdown: '複数ノート比較の負担が大きい理由',
             updatedAt: new Date('2023-11-12'),
-            score: 0.81
-        }
+            score: 0.81,
+        },
     ],
-    '仕組みのスケッチ': [
+    仕組みのスケッチ: [
         {
             id: 'demo-mech-1',
             markdown: 'セクション単位での関連ノート抽出案',
             updatedAt: new Date('2024-02-14'),
-            score: 0.93
+            score: 0.93,
         },
         {
             id: 'demo-mech-2',
             markdown: 'Mixは化学反応を起こすための装置',
             updatedAt: new Date('2024-01-25'),
-            score: 0.89
+            score: 0.89,
         },
         {
             id: 'demo-mech-3',
             markdown: '生成結果を資産化する運用のメモ',
             updatedAt: new Date('2023-12-03'),
-            score: 0.84
-        }
+            score: 0.84,
+        },
     ],
-    '次の一手': [
+    次の一手: [
         {
             id: 'demo-next-1',
             markdown: '体験のループを可視化する構成案',
             updatedAt: new Date('2024-02-10'),
-            score: 0.91
+            score: 0.91,
         },
         {
             id: 'demo-next-2',
             markdown: 'Mix直後に見せるフィードバック設計',
             updatedAt: new Date('2024-01-09'),
-            score: 0.85
+            score: 0.85,
         },
         {
             id: 'demo-next-3',
             markdown: 'デモ体験で価値を掴ませる導線',
             updatedAt: new Date('2023-10-30'),
-            score: 0.8
-        }
+            score: 0.8,
+        },
     ],
     Introduction: [
         {
             id: 'demo-intro-1',
             markdown: '思考を止めないノートの設計メモ',
             updatedAt: new Date('2024-02-05'),
-            score: 0.82
-        }
+            score: 0.82,
+        },
     ],
     default: [
         {
             id: 'demo-default-1',
             markdown: 'ノート同士の化学反応を起こす仕掛け',
             updatedAt: new Date('2024-02-03'),
-            score: 0.79
-        }
-    ]
+            score: 0.79,
+        },
+    ],
 };
 
-const DEFAULT_CATEGORIES = ["Memo", "Blog", "Qiita", "Twitter"];
+const DEFAULT_CATEGORIES = ['Memo', 'Blog', 'Qiita', 'Twitter'];
 
 export const DemoPage: React.FC = () => {
     const [content, setContent] = useState(DEMO_CONTENT);
@@ -176,11 +176,11 @@ export const DemoPage: React.FC = () => {
     const [activeSection, setActiveSection] = useState<DemoSectionState>({ heading: '', text: '' });
 
     const handleToggleNote = (note: MixSelectableNote) => {
-        setSelectedNotes(prev => (
+        setSelectedNotes((prev) =>
             prev.some((item) => item.id === note.id)
-                ? prev.filter(item => item.id !== note.id)
-                : [...prev, note]
-        ));
+                ? prev.filter((item) => item.id !== note.id)
+                : [...prev, note],
+        );
     };
 
     const handleSectionChange = useCallback((next: DemoSectionState) => {
@@ -220,8 +220,8 @@ export const DemoPage: React.FC = () => {
         try {
             await copyTextToClipboard(content);
         } catch (e) {
-            console.error("Failed to copy note:", e);
-            alert("Failed to copy note.");
+            console.error('Failed to copy note:', e);
+            alert('Failed to copy note.');
         }
     };
 
@@ -237,14 +237,14 @@ export const DemoPage: React.FC = () => {
         <>
             <MainLayout
                 editorHeader={
-                <EditorHeader
-                    saveStatus={saveStatus}
-                    category={category}
-                    setCategory={setCategory}
-                    categories={categories}
-                    onAddCategory={handleAddCategory}
-                    onCopyNote={handleCopyNote}
-                />
+                    <EditorHeader
+                        saveStatus={saveStatus}
+                        category={category}
+                        setCategory={setCategory}
+                        categories={categories}
+                        onAddCategory={handleAddCategory}
+                        onCopyNote={handleCopyNote}
+                    />
                 }
                 selectedNotes={selectedNotes}
                 onToggleNote={handleToggleNote}
@@ -263,7 +263,11 @@ export const DemoPage: React.FC = () => {
                 isMixing={isMixing}
                 isMixAllowed={true}
             >
-                <DemoEditor content={content} setContent={setContent} onSectionChange={handleSectionChange} />
+                <DemoEditor
+                    content={content}
+                    setContent={setContent}
+                    onSectionChange={handleSectionChange}
+                />
             </MainLayout>
 
             {isMixModalOpen && (
@@ -310,7 +314,7 @@ export const DemoPage: React.FC = () => {
 const DemoEditor = ({
     content,
     setContent,
-    onSectionChange
+    onSectionChange,
 }: {
     content: string;
     setContent: (next: string) => void;
@@ -328,44 +332,50 @@ const DemoEditor = ({
 const buildDemoMixMarkdown = (
     section: DemoSectionState,
     notes: MixSelectableNote[],
-    category: Category
+    category: Category,
 ) => {
     const normalizedCategory = category.trim().toLowerCase();
     const heading = section.heading || 'Introduction';
     const text = section.text.split('\n').slice(1).join(' ').trim();
     const snippet = text ? text.slice(0, 160) : '今書いているセクションの要点を整理する。';
     const sources = notes.length
-        ? notes.map(note => `- ${note.markdown.slice(0, 56)}`).join('\n')
+        ? notes.map((note) => `- ${note.markdown.slice(0, 56)}`).join('\n')
         : '- （選択なし）';
 
     if (normalizedCategory === 'twitter') {
         return [
             `1/ ${heading}を起点に、思考の流れを止めないノート体験を設計する。`,
             `2/ ${snippet}`,
-            `3/ 関連ノート: ${notes.map(note => note.markdown.slice(0, 24)).join(' / ') || '今のノートだけで十分'}.`
+            `3/ 関連ノート: ${notes.map((note) => note.markdown.slice(0, 24)).join(' / ') || '今のノートだけで十分'}.`,
         ].join('\n');
     }
 
     if (normalizedCategory === 'qiita') {
-        return `# ${heading}を起点にしたMixのまとめ\n\n` +
+        return (
+            `# ${heading}を起点にしたMixのまとめ\n\n` +
             `## 課題\n${snippet}\n\n` +
             `## アプローチ\n文脈で関連ノートを引き寄せ、Mixで新しい視点を生成する。\n\n` +
-            `## 参考にしたノート\n${sources}`;
+            `## 参考にしたノート\n${sources}`
+        );
     }
 
     if (normalizedCategory === 'blog') {
-        return `# ${heading}から広げるアイデア\n\n` +
+        return (
+            `# ${heading}から広げるアイデア\n\n` +
             `${snippet}\n\n` +
             `## なぜ今これか\n今の文脈で関連ノートを呼び出すことで、思考の分断を防げる。\n\n` +
             `## Mixの価値\n複数の視点を統合して、新しい問いを生み出す。\n\n` +
-            `## 参照\n${sources}`;
+            `## 参照\n${sources}`
+        );
     }
 
-    return `# Mix: ${heading}\n\n` +
+    return (
+        `# Mix: ${heading}\n\n` +
         `## 要約\n` +
         `- 現在のセクションを軸に、新しい視点を組み立てる。\n` +
-        `- ${notes.length ? `関連ノート: ${notes.map(note => note.markdown.slice(0, 24)).join(' / ')}` : '関連ノート: 選択なし'}\n` +
+        `- ${notes.length ? `関連ノート: ${notes.map((note) => note.markdown.slice(0, 24)).join(' / ')}` : '関連ノート: 選択なし'}\n` +
         `- 次の行動を小さく切り出す。\n\n` +
         `## メモ\n${snippet}\n\n` +
-        `## 参照\n${sources}`;
+        `## 参照\n${sources}`
+    );
 };

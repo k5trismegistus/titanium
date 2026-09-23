@@ -6,8 +6,8 @@ import type { MarkdownSerializerState } from 'prosemirror-markdown';
 import { defaultMarkdownSerializer } from 'prosemirror-markdown';
 import type { MarkdownStorage } from 'tiptap-markdown';
 
-const BLANK_LINE_TOKEN_PREFIX = "[[titanium-blank-line:";
-const BLANK_LINE_TOKEN_SUFFIX = "]]";
+const BLANK_LINE_TOKEN_PREFIX = '[[titanium-blank-line:';
+const BLANK_LINE_TOKEN_SUFFIX = ']]';
 const BLANK_LINE_TOKEN_REGEX = /^\[\[titanium-blank-line:(\d+)\]\]$/;
 
 export const TitaniumParagraph = Paragraph.extend({
@@ -16,7 +16,7 @@ export const TitaniumParagraph = Paragraph.extend({
             blankLineCount: {
                 default: 0,
                 parseHTML: (element: HTMLElement) => {
-                    const value = element.getAttribute("data-blank-line-count");
+                    const value = element.getAttribute('data-blank-line-count');
                     if (!value) return 0;
                     const parsed = Number.parseInt(value, 10);
                     return Number.isFinite(parsed) ? parsed : 0;
@@ -28,20 +28,23 @@ export const TitaniumParagraph = Paragraph.extend({
                     }
 
                     return {
-                        "data-blank-line": "true",
-                        "data-blank-line-count": String(blankLineCount)
+                        'data-blank-line': 'true',
+                        'data-blank-line-count': String(blankLineCount),
                     };
-                }
+                },
             },
             blankLineDisplayCount: {
                 default: 0,
                 parseHTML: (element: HTMLElement) => {
-                    const value = element.getAttribute("data-blank-line-display-count");
+                    const value = element.getAttribute('data-blank-line-display-count');
                     if (!value) return 0;
                     const parsed = Number.parseInt(value, 10);
                     return Number.isFinite(parsed) ? parsed : 0;
                 },
-                renderHTML: (attributes: { blankLineCount?: number; blankLineDisplayCount?: number }) => {
+                renderHTML: (attributes: {
+                    blankLineCount?: number;
+                    blankLineDisplayCount?: number;
+                }) => {
                     const blankLineCount = attributes.blankLineCount ?? 0;
                     const blankLineDisplayCount = attributes.blankLineDisplayCount ?? 0;
                     if (blankLineCount <= 0 || blankLineDisplayCount <= 0) {
@@ -49,11 +52,11 @@ export const TitaniumParagraph = Paragraph.extend({
                     }
 
                     return {
-                        "data-blank-line-display-count": String(blankLineDisplayCount),
-                        style: `--blank-line-count:${blankLineDisplayCount};`
+                        'data-blank-line-display-count': String(blankLineDisplayCount),
+                        style: `--blank-line-count:${blankLineDisplayCount};`,
                     };
-                }
-            }
+                },
+            },
         };
     },
     addStorage() {
@@ -63,13 +66,18 @@ export const TitaniumParagraph = Paragraph.extend({
                     state: MarkdownSerializerState,
                     node: ProseMirrorNode,
                     parent: ProseMirrorNode,
-                    index: number
+                    index: number,
                 ) => {
-                    const blankLineCount = typeof node.attrs.blankLineCount === "number" ? node.attrs.blankLineCount : 0;
+                    const blankLineCount =
+                        typeof node.attrs.blankLineCount === 'number'
+                            ? node.attrs.blankLineCount
+                            : 0;
                     if (blankLineCount > 0 && node.textContent.length === 0) {
-                        const serializerState = state as MarkdownSerializerState & { flushClose: (size?: number) => void };
+                        const serializerState = state as MarkdownSerializerState & {
+                            flushClose: (size?: number) => void;
+                        };
                         if (index === 0) {
-                            serializerState.write("\n".repeat(blankLineCount));
+                            serializerState.write('\n'.repeat(blankLineCount));
                             return;
                         }
 
@@ -81,51 +89,60 @@ export const TitaniumParagraph = Paragraph.extend({
                 },
                 parse: {
                     updateDOM: (element: Element) => {
-                        element.querySelectorAll("p").forEach((paragraph) => {
-                            const text = paragraph.textContent?.trim() ?? "";
+                        element.querySelectorAll('p').forEach((paragraph) => {
+                            const text = paragraph.textContent?.trim() ?? '';
                             const match = text.match(BLANK_LINE_TOKEN_REGEX);
                             if (!match) {
                                 return;
                             }
 
-                            paragraph.textContent = "";
-                            paragraph.setAttribute("data-blank-line", "true");
-                            paragraph.setAttribute("data-blank-line-count", match[1]);
+                            paragraph.textContent = '';
+                            paragraph.setAttribute('data-blank-line', 'true');
+                            paragraph.setAttribute('data-blank-line-count', match[1]);
                             const hasPreviousBlock = Boolean(paragraph.previousElementSibling);
                             const hasNextBlock = Boolean(paragraph.nextElementSibling);
                             const blankLineCount = Number.parseInt(match[1], 10);
-                            const displayCount = hasPreviousBlock && hasNextBlock
-                                ? Math.max(blankLineCount - 1, 1)
-                                : blankLineCount;
+                            const displayCount =
+                                hasPreviousBlock && hasNextBlock
+                                    ? Math.max(blankLineCount - 1, 1)
+                                    : blankLineCount;
 
-                            paragraph.setAttribute("data-blank-line-display-count", String(displayCount));
-                            paragraph.setAttribute("style", `--blank-line-count:${displayCount};`);
+                            paragraph.setAttribute(
+                                'data-blank-line-display-count',
+                                String(displayCount),
+                            );
+                            paragraph.setAttribute('style', `--blank-line-count:${displayCount};`);
                         });
-                    }
-                }
-            }
+                    },
+                },
+            },
         };
-    }
+    },
 });
 
 export const TitaniumHardBreak = HardBreak.extend({
     addStorage() {
         return {
             markdown: {
-                serialize: (state: MarkdownSerializerState, node: ProseMirrorNode, parent: ProseMirrorNode, index: number) => {
+                serialize: (
+                    state: MarkdownSerializerState,
+                    node: ProseMirrorNode,
+                    parent: ProseMirrorNode,
+                    index: number,
+                ) => {
                     for (let i = index + 1; i < parent.childCount; i += 1) {
                         if (parent.child(i).type !== node.type) {
-                            state.write("\n");
+                            state.write('\n');
                             return;
                         }
                     }
                 },
                 parse: {
                     // markdown-it 側で処理する。
-                }
-            }
+                },
+            },
         };
-    }
+    },
 });
 
 export const getEditorMarkdown = (editor: Editor) => {
@@ -137,7 +154,7 @@ export const getEditorMarkdown = (editor: Editor) => {
 };
 
 export const prepareMarkdownForRichEditor = (markdown: string) => {
-    if (!markdown) return "";
+    if (!markdown) return '';
 
     return markdown.replace(/\n{2,}/g, (match, offset, input) => {
         const isStart = offset === 0;
@@ -160,4 +177,5 @@ export const prepareMarkdownForRichEditor = (markdown: string) => {
     });
 };
 
-const getBlankLineToken = (blankLineCount: number) => `${BLANK_LINE_TOKEN_PREFIX}${blankLineCount}${BLANK_LINE_TOKEN_SUFFIX}`;
+const getBlankLineToken = (blankLineCount: number) =>
+    `${BLANK_LINE_TOKEN_PREFIX}${blankLineCount}${BLANK_LINE_TOKEN_SUFFIX}`;

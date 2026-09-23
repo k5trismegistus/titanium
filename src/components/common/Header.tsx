@@ -12,28 +12,28 @@ export const Header: React.FC = () => {
     const { user, isAllowed } = useAuth();
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isQuickWordOpen, setIsQuickWordOpen] = useState(false);
-    const [quickWord, setQuickWord] = useState("");
+    const [quickWord, setQuickWord] = useState('');
     const [isQuickWordSaving, setIsQuickWordSaving] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const isDemoRoute = location.pathname === "/demo";
+    const isDemoRoute = location.pathname === '/demo';
     const { categories } = useUserCategories();
-    const defaultCategory = categories[0] || "Memo";
+    const defaultCategory = categories[0] || 'Memo';
 
     const handleCreateNote = async () => {
         if (!user) return;
         try {
-            const docRef = await addDoc(collection(db, "notes"), {
+            const docRef = await addDoc(collection(db, 'notes'), {
                 userId: user.uid,
-                markdown: "",
+                markdown: '',
                 category: defaultCategory,
                 updatedAt: serverTimestamp(),
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
             });
             navigate(`/note/${docRef.id}`);
         } catch (e) {
-            console.error("Failed to create note:", e);
-            alert("Failed to create note.");
+            console.error('Failed to create note:', e);
+            alert('Failed to create note.');
         }
     };
 
@@ -46,14 +46,14 @@ export const Header: React.FC = () => {
         try {
             const result = await callQuickWord({ word: trimmed, category: defaultCategory });
             const noteId = result.data.noteId;
-            setQuickWord("");
+            setQuickWord('');
             setIsQuickWordOpen(false);
             if (noteId) {
                 navigate(`/note/${noteId}`);
             }
         } catch (e) {
-            console.error("Quick Word failed:", e);
-            alert("Quick Word failed. See console.");
+            console.error('Quick Word failed:', e);
+            alert('Quick Word failed. See console.');
         } finally {
             setIsQuickWordSaving(false);
         }
@@ -73,7 +73,7 @@ export const Header: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {(user && isAllowed) && (
+                    {user && isAllowed && (
                         <div className="relative">
                             <button
                                 onClick={() => setIsQuickWordOpen((prev) => !prev)}
@@ -85,7 +85,10 @@ export const Header: React.FC = () => {
                             </button>
                             {isQuickWordOpen && (
                                 <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-gray-200 bg-white p-3 shadow-lg">
-                                    <form onSubmit={handleQuickWordSubmit} className="flex items-center gap-2">
+                                    <form
+                                        onSubmit={handleQuickWordSubmit}
+                                        className="flex items-center gap-2"
+                                    >
                                         <input
                                             value={quickWord}
                                             onChange={(e) => setQuickWord(e.target.value)}
@@ -98,7 +101,11 @@ export const Header: React.FC = () => {
                                             disabled={isQuickWordSaving || !quickWord.trim()}
                                             className="text-xs font-medium bg-primary text-white px-3 py-2 rounded-lg disabled:opacity-50"
                                         >
-                                            {isQuickWordSaving ? <Loader2 size={14} className="animate-spin" /> : "Save"}
+                                            {isQuickWordSaving ? (
+                                                <Loader2 size={14} className="animate-spin" />
+                                            ) : (
+                                                'Save'
+                                            )}
                                         </button>
                                     </form>
                                     <p className="mt-2 text-xs text-gray-400">
@@ -125,7 +132,6 @@ export const Header: React.FC = () => {
                     >
                         <HelpCircle size={20} />
                     </button>
-
                 </div>
             </header>
 

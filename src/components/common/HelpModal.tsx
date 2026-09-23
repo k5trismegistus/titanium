@@ -18,7 +18,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <h2 className="text-xl font-bold flex items-center gap-2">
@@ -26,13 +25,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                     </h2>
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setLang(l => l === 'jp' ? 'en' : 'jp')}
+                            onClick={() => setLang((l) => (l === 'jp' ? 'en' : 'jp'))}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                         >
                             <Globe size={14} />
                             {isJP ? 'English' : '日本語'}
                         </button>
-                        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+                        >
                             <X size={20} />
                         </button>
                     </div>
@@ -40,7 +42,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto max-h-[70dvh] space-y-8">
-
                     {/* Section 1: Philosophy */}
                     <section>
                         <h3 className="text-lg font-bold text-primary mb-3">
@@ -51,7 +52,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                 <>
                                     <p>
                                         Titaniumは「考える流れを止めない」ためのノートです。素早く書けて、あとから自然につながる。
-                                        思考の熱量を保ったまま、<b>書く → 見つかる → 混ざる</b>を回せるように設計されています。
+                                        思考の熱量を保ったまま、<b>書く → 見つかる → 混ざる</b>
+                                        を回せるように設計されています。
                                     </p>
                                     <p>
                                         AIは答えを置き換えるものではなく、連想の触媒。あなたが主役で、AIは「もうひとつの視点」を
@@ -61,12 +63,15 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <>
                                     <p>
-                                        Titanium is built to keep your thinking in motion: write fast, rediscover naturally.
-                                        It’s designed to support a flow of <b>write → connect → synthesize</b> without breaking your momentum.
+                                        Titanium is built to keep your thinking in motion: write
+                                        fast, rediscover naturally. It’s designed to support a flow
+                                        of <b>write → connect → synthesize</b> without breaking your
+                                        momentum.
                                     </p>
                                     <p>
-                                        AI doesn’t replace your answers. It acts as a catalyst for association, offering another angle
-                                        while you stay in the driver’s seat.
+                                        AI doesn’t replace your answers. It acts as a catalyst for
+                                        association, offering another angle while you stay in the
+                                        driver’s seat.
                                     </p>
                                 </>
                             )}
@@ -92,11 +97,13 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <>
                                     <p>
-                                        Create a new note and start writing. Your input is auto-saved after a few seconds,
-                                        and the status indicator shows whether it’s saved.
+                                        Create a new note and start writing. Your input is
+                                        auto-saved after a few seconds, and the status indicator
+                                        shows whether it’s saved.
                                     </p>
                                     <p>
-                                        Markdown is supported, and the Preview below lets you confirm formatting as you go.
+                                        Markdown is supported, and the Preview below lets you
+                                        confirm formatting as you go.
                                     </p>
                                 </>
                             )}
@@ -109,7 +116,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                 loading="lazy"
                             />
                             <figcaption className="text-xs text-gray-400">
-                                {isJP ? '書く → プレビュー → 自動保存の流れ' : 'Write → Preview → Auto-save flow'}
+                                {isJP
+                                    ? '書く → プレビュー → 自動保存の流れ'
+                                    : 'Write → Preview → Auto-save flow'}
                             </figcaption>
                         </figure>
                     </section>
@@ -117,13 +126,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                     {/* Section 3: Suggestions */}
                     <section>
                         <h3 className="text-lg font-bold text-primary mb-3">
-                            {isJP ? '💡 関連ノートの提案 (Suggestions)' : '💡 Related Note Suggestions'}
+                            {isJP
+                                ? '💡 関連ノートの提案 (Suggestions)'
+                                : '💡 Related Note Suggestions'}
                         </h3>
                         <div className="text-gray-600 leading-relaxed space-y-3">
                             {isJP ? (
                                 <>
                                     <p>
-                                        デスクトップでは右側の「Related Thoughts」に、今書いているセクションに近いノートが表示されます。
+                                        デスクトップでは右側の「Related
+                                        Thoughts」に、今書いているセクションに近いノートが表示されます。
                                         単なるキーワード一致ではなく、文脈と意味の近さで探しているため、直感的に関連する発想が見つかります。
                                     </p>
                                     <p>
@@ -133,12 +145,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <>
                                     <p>
-                                        On desktop, the “Related Thoughts” rail surfaces notes close to the section you’re currently writing.
-                                        It matches by context and meaning, not just keywords, so related ideas appear naturally.
+                                        On desktop, the “Related Thoughts” rail surfaces notes close
+                                        to the section you’re currently writing. It matches by
+                                        context and meaning, not just keywords, so related ideas
+                                        appear naturally.
                                     </p>
-                                    <p>
-                                        Click a note to select it as an ingredient for Mix.
-                                    </p>
+                                    <p>Click a note to select it as an ingredient for Mix.</p>
                                 </>
                             )}
                         </div>
@@ -150,7 +162,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                 loading="lazy"
                             />
                             <figcaption className="text-xs text-gray-400">
-                                {isJP ? '関連ノートを選んでMixに渡す' : 'Pick related notes and send them to Mix'}
+                                {isJP
+                                    ? '関連ノートを選んでMixに渡す'
+                                    : 'Pick related notes and send them to Mix'}
                             </figcaption>
                         </figure>
                     </section>
@@ -164,7 +178,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             {isJP ? (
                                 <>
                                     <p>
-                                        ヘッダーのQuick Wordに単語を入れて保存すると、その単語の解説ノートが自動生成されます。
+                                        ヘッダーのQuick
+                                        Wordに単語を入れて保存すると、その単語の解説ノートが自動生成されます。
                                     </p>
                                     <p>
                                         あらかじめ登録しておくと、関連サジェストやMixの素材として活用できます。
@@ -173,7 +188,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <>
                                     <p>
-                                        Drop a term into Quick Word in the header to auto-generate a short explainer note.
+                                        Drop a term into Quick Word in the header to auto-generate a
+                                        short explainer note.
                                     </p>
                                     <p>
                                         Stockpiled terms will later surface in suggestions and Mix.
@@ -192,12 +208,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             {isJP ? (
                                 <>
                                     <p>
-                                        複数のノートやアイデアを組み合わせて、<b>新しい洞察</b>を生み出す機能です。
-                                        右側のRelated Thoughtsパネル下部のMixボタンから実行し、選択したノートと現在開いているノートを材料にして合成します。
+                                        複数のノートやアイデアを組み合わせて、<b>新しい洞察</b>
+                                        を生み出す機能です。 右側のRelated
+                                        Thoughtsパネル下部のMixボタンから実行し、選択したノートと現在開いているノートを材料にして合成します。
                                     </p>
-                                    <p>
-                                        もし選択がない場合でも、現在のノートだけでMixできます。
-                                    </p>
+                                    <p>もし選択がない場合でも、現在のノートだけでMixできます。</p>
                                     <p>
                                         Mixカテゴリはサイドパネル下部で指定できます。
                                         ドロップダウン最下部の「+Add」から新しいカテゴリを追加できます。
@@ -207,16 +222,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <>
                                     <p>
-                                        Mix combines multiple notes or ideas to create <b>new insights</b>.
-                                        Run it from the Mix button at the bottom of the Related Thoughts panel to synthesize selected notes plus the one you’re currently editing.
+                                        Mix combines multiple notes or ideas to create{' '}
+                                        <b>new insights</b>. Run it from the Mix button at the
+                                        bottom of the Related Thoughts panel to synthesize selected
+                                        notes plus the one you’re currently editing.
                                     </p>
+                                    <p>If nothing is selected, Mix uses the current note alone.</p>
                                     <p>
-                                        If nothing is selected, Mix uses the current note alone.
-                                    </p>
-                                    <p>
-                                        Mix category sets the output tone.
-                                        Use +Add at the bottom of the dropdown to create a new category.
-                                        You can save the Mix result as a new note.
+                                        Mix category sets the output tone. Use +Add at the bottom of
+                                        the dropdown to create a new category. You can save the Mix
+                                        result as a new note.
                                     </p>
                                 </>
                             )}
@@ -224,13 +239,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-500">
                             {isJP ? (
                                 <>
-                                    * Mixの出力は、元のノートの言語に合わせて生成されます。<br />
-                                    * 内容の書き換えではなく、<b>「化学反応」</b>を起こすことを目的としています。
+                                    * Mixの出力は、元のノートの言語に合わせて生成されます。
+                                    <br />* 内容の書き換えではなく、<b>「化学反応」</b>
+                                    を起こすことを目的としています。
                                 </>
                             ) : (
                                 <>
-                                    * The output is generated in the same language as the primary note.<br />
-                                    * The goal is not just rewriting, but creating a <b>"Chemical Reaction"</b> between ideas.
+                                    * The output is generated in the same language as the primary
+                                    note.
+                                    <br />* The goal is not just rewriting, but creating a{' '}
+                                    <b>"Chemical Reaction"</b> between ideas.
                                 </>
                             )}
                         </div>
@@ -242,11 +260,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                 loading="lazy"
                             />
                             <figcaption className="text-xs text-gray-400">
-                                {isJP ? 'Mixの出力を確認して新規ノートとして保存' : 'Review the Mix output and save as a new note'}
+                                {isJP
+                                    ? 'Mixの出力を確認して新規ノートとして保存'
+                                    : 'Review the Mix output and save as a new note'}
                             </figcaption>
                         </figure>
                     </section>
-
                 </div>
             </div>
         </div>

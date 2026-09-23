@@ -4,16 +4,16 @@ export const copyTextToClipboard = async (text: string) => {
         return;
     }
 
-    const textarea = document.createElement("textarea");
+    const textarea = document.createElement('textarea');
     textarea.value = text;
-    textarea.setAttribute("readonly", "true");
-    textarea.style.position = "fixed";
-    textarea.style.left = "-9999px";
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
     document.body.appendChild(textarea);
     textarea.select();
 
     try {
-        document.execCommand("copy");
+        document.execCommand('copy');
     } finally {
         document.body.removeChild(textarea);
     }

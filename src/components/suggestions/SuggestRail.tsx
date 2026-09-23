@@ -54,14 +54,14 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     isMixing = false,
     isMixAllowed = false,
     isOpen: controlledIsOpen,
-    onOpenChange
+    onOpenChange,
 }) => {
     const { user } = useAuth();
     const { noteId: currentId } = useParams<{ noteId: string }>();
     const navigate = useNavigate();
     const { activeSectionText, activeSectionHeading } = useEditorContext();
     const [internalIsOpen, setInternalIsOpen] = useState(() => {
-        if (typeof window === "undefined") return true;
+        if (typeof window === 'undefined') return true;
         return window.innerWidth >= 1024;
     });
     const [suggestions, setSuggestions] = useState<MixSelectableNote[]>([]);
@@ -72,28 +72,32 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     const filteredSuggestions = suggestions.filter((note) => !selectedIds.has(note.id));
     const isOpen = controlledIsOpen ?? internalIsOpen;
     const setIsOpen = onOpenChange ?? setInternalIsOpen;
-    const queryText = useMemo(() => buildDistinctiveQueryText({
-        sectionHeading: activeSectionHeading,
-        sectionText: activeSectionText,
-        noteMarkdown: currentNoteMarkdown
-    }), [activeSectionHeading, activeSectionText, currentNoteMarkdown]);
+    const queryText = useMemo(
+        () =>
+            buildDistinctiveQueryText({
+                sectionHeading: activeSectionHeading,
+                sectionText: activeSectionText,
+                noteMarkdown: currentNoteMarkdown,
+            }),
+        [activeSectionHeading, activeSectionText, currentNoteMarkdown],
+    );
     const railClassName = isOpen
-        ? "fixed inset-x-0 bottom-0 top-0 z-50 w-full bg-gray-50 transition-all duration-300 ease-in-out lg:sticky lg:inset-x-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-80 lg:border-l lg:border-muted lg:self-start"
-        : "hidden transition-all duration-300 ease-in-out lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:block lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:border-l lg:border-muted lg:bg-gray-50 lg:self-start";
+        ? 'fixed inset-x-0 bottom-0 top-0 z-50 w-full bg-gray-50 transition-all duration-300 ease-in-out lg:sticky lg:inset-x-auto lg:bottom-auto lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-80 lg:border-l lg:border-muted lg:self-start'
+        : 'hidden transition-all duration-300 ease-in-out lg:sticky lg:top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] lg:z-30 lg:block lg:h-[calc(100svh-var(--global-header-height,3.5rem)-var(--editor-header-height,0px))] lg:w-12 lg:border-l lg:border-muted lg:bg-gray-50 lg:self-start';
     // スマホでは全画面ドロワーとして開き、閉じるボタンを常に画面内へ置く。
     const toggleButtonClassName = isOpen
-        ? "absolute left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-30 rounded-full border border-muted bg-white p-2 text-gray-400 shadow-sm hover:text-primary lg:-left-3 lg:top-4 lg:p-1"
-        : "flex h-full w-full items-center justify-center rounded-full text-gray-400 hover:text-primary lg:absolute lg:-left-3 lg:top-4 lg:h-auto lg:w-auto lg:bg-white lg:border lg:border-muted lg:p-1 lg:shadow-sm";
+        ? 'absolute left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-30 rounded-full border border-muted bg-white p-2 text-gray-400 shadow-sm hover:text-primary lg:-left-3 lg:top-4 lg:p-1'
+        : 'flex h-full w-full items-center justify-center rounded-full text-gray-400 hover:text-primary lg:absolute lg:-left-3 lg:top-4 lg:h-auto lg:w-auto lg:bg-white lg:border lg:border-muted lg:p-1 lg:shadow-sm';
     const hintSuggestion = filteredSuggestions[0];
-    const hintText = hintSuggestion ? extractOpeningFragment(hintSuggestion.markdown) : "";
+    const hintText = hintSuggestion ? extractOpeningFragment(hintSuggestion.markdown) : '';
 
     useEffect(() => {
-        if (typeof window === "undefined") return;
+        if (typeof window === 'undefined') return;
         if (!isOpen || window.innerWidth >= 1024) return;
 
         // ドロワー表示中に背面のエディタがスクロールしないよう固定する。
         const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
+        document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = previousOverflow;
         };
@@ -101,7 +105,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
 
     useEffect(() => {
         setIsHintVisible(false);
-        if (typeof window === "undefined") return;
+        if (typeof window === 'undefined') return;
         if (isOpen || loading || !hintText) return;
         if (window.innerWidth >= 1024) return;
 
@@ -113,11 +117,12 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
 
     useEffect(() => {
         if (demoSuggestions) {
-            const key = activeSectionHeading || "Introduction";
-            const nextSuggestions = demoSuggestions[key]
-                || demoSuggestions.Introduction
-                || demoSuggestions.default
-                || [];
+            const key = activeSectionHeading || 'Introduction';
+            const nextSuggestions =
+                demoSuggestions[key] ||
+                demoSuggestions.Introduction ||
+                demoSuggestions.default ||
+                [];
             setSuggestions(nextSuggestions);
             setLoading(false);
             return;
@@ -131,18 +136,18 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
                 if (!currentId) {
                     // 現在ノートがない場合は、最近のノートを提案する。
                     const q = query(
-                        collection(db, "notes"),
-                        where("userId", "==", user.uid),
-                        orderBy("updatedAt", "desc"),
-                        limit(10)
+                        collection(db, 'notes'),
+                        where('userId', '==', user.uid),
+                        orderBy('updatedAt', 'desc'),
+                        limit(10),
                     );
                     const snap = await getDocs(q);
-                    const notes = snap.docs.map(d => {
+                    const notes = snap.docs.map((d) => {
                         const data = d.data() as { markdown?: unknown; updatedAt?: unknown };
                         return {
                             id: d.id,
-                            markdown: typeof data.markdown === "string" ? data.markdown : "",
-                            updatedAt: toDateSafe(data.updatedAt)
+                            markdown: typeof data.markdown === 'string' ? data.markdown : '',
+                            updatedAt: toDateSafe(data.updatedAt),
                         };
                     });
                     setSuggestions(notes);
@@ -151,19 +156,21 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
 
                 // 文脈クエリでベクトル検索を呼び出す。
                 if (import.meta.env.DEV) {
-                    const preview = queryText ? queryText.slice(0, 80) : "";
-                    console.log(`[suggest] contextual queryText len=${queryText?.length ?? 0} preview="${preview}"`);
+                    const preview = queryText ? queryText.slice(0, 80) : '';
+                    console.log(
+                        `[suggest] contextual queryText len=${queryText?.length ?? 0} preview="${preview}"`,
+                    );
                 }
                 const result = await searchRelated({ noteId: currentId, queryText });
                 const relatedNotes = result.data.results.map((r: any) => ({
                     id: r.id,
                     markdown: r.markdown,
-                    updatedAt: toDateSafe(r.date)
+                    updatedAt: toDateSafe(r.date),
                 }));
 
                 setSuggestions(relatedNotes);
             } catch (e) {
-                console.error("Failed to fetch suggestions:", e);
+                console.error('Failed to fetch suggestions:', e);
             } finally {
                 setLoading(false);
             }
@@ -175,115 +182,142 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
 
     return (
         <>
-        {!isOpen && isHintVisible && hintSuggestion && hintText && (
-            <MobileRelatedHint
-                text={hintText}
-                onOpen={() => {
-                    setIsHintVisible(false);
-                    setIsOpen(true);
-                }}
-            />
-        )}
-        <div className={railClassName}>
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className={toggleButtonClassName}
-                aria-label={isOpen ? "Close related thoughts" : "Open related thoughts"}
-                aria-expanded={isOpen}
-            >
-                {isOpen ? <X size={16} /> : <ChevronLeft size={14} />}
-            </button>
-
-            {isOpen ? (
-                <div className="flex h-full flex-col">
-                    <div className="px-5 pb-4 pl-16 pt-[calc(1rem+env(safe-area-inset-top))] lg:p-4 lg:pl-12">
-                        <div className="flex min-h-10 items-center gap-2 text-gray-500 text-sm font-medium">
-                            <Lightbulb size={18} />
-                            <span>Related Thoughts</span>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto px-5 pb-4 lg:px-4">
-                        {selectedNotes.length > 0 && (
-                            <div className="mb-6">
-                                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                                    Selected for Mix
-                                </div>
-                                <div className="mt-2 space-y-2">
-                                    {selectedNotes.map(note => (
-                                        <SuggestItem
-                                            key={`selected-${note.id}`}
-                                            title={extractOpeningFragment(note.markdown) || "Untitled Note"}
-                                            date={note.updatedAt}
-                                            checked
-                                            onToggle={() => onToggleNote(note)}
-                                            onOpen={canOpenNotes ? () => {
-                                                navigate(`/note/${note.id}`);
-                                            } : undefined}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        <div className="space-y-4">
-                            {loading ? (
-                                <div className="text-gray-400 text-xs text-center py-4">Finding connections...</div>
-                            ) : filteredSuggestions.length === 0 ? (
-                                <div className="text-gray-400 text-xs text-center py-4">No other notes found.</div>
-                            ) : (
-                                filteredSuggestions.map(note => (
-                                    <SuggestItem
-                                        key={note.id}
-                                        title={extractOpeningFragment(note.markdown) || "Untitled Note"}
-                                        date={note.updatedAt}
-                                        checked={selectedIds.has(note.id)}
-                                        onToggle={() => onToggleNote({
-                                            id: note.id,
-                                            markdown: note.markdown,
-                                            updatedAt: note.updatedAt
-                                        })}
-                                        onOpen={canOpenNotes ? () => {
-                                            navigate(`/note/${note.id}`);
-                                        } : undefined}
-                                    />
-                                ))
-                        )}
-                    </div>
-                    </div>
-
-                    {selectedNotes.length > 0 && onMix && onChangeMixCategory && onAddCategory && (
-                        <div className="border-t border-muted bg-white/95 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:px-4 lg:pb-3">
-                            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                                Mix Output
-                            </div>
-                            <div className="mt-2 flex items-center gap-3">
-                                <CategorySelect
-                                    value={mixCategory ?? ""}
-                                    options={categories}
-                                    onChange={onChangeMixCategory}
-                                    onAdd={onAddCategory}
-                                    className="min-w-0 flex-1"
-                                    selectClassName="w-full"
-                                    inputClassName="w-full"
-                                />
-                                <MixButton onClick={onMix} disabled={!isMixAllowed} isLoading={isMixing} />
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="flex flex-col items-center pt-6 gap-4">
-                    <Lightbulb size={20} className="text-gray-400" />
-                </div>
+            {!isOpen && isHintVisible && hintSuggestion && hintText && (
+                <MobileRelatedHint
+                    text={hintText}
+                    onOpen={() => {
+                        setIsHintVisible(false);
+                        setIsOpen(true);
+                    }}
+                />
             )}
-        </div>
+            <div className={railClassName}>
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={toggleButtonClassName}
+                    aria-label={isOpen ? 'Close related thoughts' : 'Open related thoughts'}
+                    aria-expanded={isOpen}
+                >
+                    {isOpen ? <X size={16} /> : <ChevronLeft size={14} />}
+                </button>
+
+                {isOpen ? (
+                    <div className="flex h-full flex-col">
+                        <div className="px-5 pb-4 pl-16 pt-[calc(1rem+env(safe-area-inset-top))] lg:p-4 lg:pl-12">
+                            <div className="flex min-h-10 items-center gap-2 text-gray-500 text-sm font-medium">
+                                <Lightbulb size={18} />
+                                <span>Related Thoughts</span>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto px-5 pb-4 lg:px-4">
+                            {selectedNotes.length > 0 && (
+                                <div className="mb-6">
+                                    <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                        Selected for Mix
+                                    </div>
+                                    <div className="mt-2 space-y-2">
+                                        {selectedNotes.map((note) => (
+                                            <SuggestItem
+                                                key={`selected-${note.id}`}
+                                                title={
+                                                    extractOpeningFragment(note.markdown) ||
+                                                    'Untitled Note'
+                                                }
+                                                date={note.updatedAt}
+                                                checked
+                                                onToggle={() => onToggleNote(note)}
+                                                onOpen={
+                                                    canOpenNotes
+                                                        ? () => {
+                                                              navigate(`/note/${note.id}`);
+                                                          }
+                                                        : undefined
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="space-y-4">
+                                {loading ? (
+                                    <div className="text-gray-400 text-xs text-center py-4">
+                                        Finding connections...
+                                    </div>
+                                ) : filteredSuggestions.length === 0 ? (
+                                    <div className="text-gray-400 text-xs text-center py-4">
+                                        No other notes found.
+                                    </div>
+                                ) : (
+                                    filteredSuggestions.map((note) => (
+                                        <SuggestItem
+                                            key={note.id}
+                                            title={
+                                                extractOpeningFragment(note.markdown) ||
+                                                'Untitled Note'
+                                            }
+                                            date={note.updatedAt}
+                                            checked={selectedIds.has(note.id)}
+                                            onToggle={() =>
+                                                onToggleNote({
+                                                    id: note.id,
+                                                    markdown: note.markdown,
+                                                    updatedAt: note.updatedAt,
+                                                })
+                                            }
+                                            onOpen={
+                                                canOpenNotes
+                                                    ? () => {
+                                                          navigate(`/note/${note.id}`);
+                                                      }
+                                                    : undefined
+                                            }
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {selectedNotes.length > 0 &&
+                            onMix &&
+                            onChangeMixCategory &&
+                            onAddCategory && (
+                                <div className="border-t border-muted bg-white/95 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:px-4 lg:pb-3">
+                                    <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                        Mix Output
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-3">
+                                        <CategorySelect
+                                            value={mixCategory ?? ''}
+                                            options={categories}
+                                            onChange={onChangeMixCategory}
+                                            onAdd={onAddCategory}
+                                            className="min-w-0 flex-1"
+                                            selectClassName="w-full"
+                                            inputClassName="w-full"
+                                        />
+                                        <MixButton
+                                            onClick={onMix}
+                                            disabled={!isMixAllowed}
+                                            isLoading={isMixing}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center pt-6 gap-4">
+                        <Lightbulb size={20} className="text-gray-400" />
+                    </div>
+                )}
+            </div>
         </>
     );
 };
 
 const MobileRelatedHint = ({ text, onOpen }: { text: string; onOpen: () => void }) => {
-    if (typeof document === "undefined") return null;
+    if (typeof document === 'undefined') return null;
 
     return createPortal(
         <button
@@ -293,7 +327,7 @@ const MobileRelatedHint = ({ text, onOpen }: { text: string; onOpen: () => void 
         >
             <span className="line-clamp-2">“{text}”</span>
         </button>,
-        document.body
+        document.body,
     );
 };
 
@@ -304,11 +338,11 @@ const SuggestItem = ({
     onToggle,
     onOpen,
 }: {
-    title: string,
-    date?: Date,
-    checked: boolean,
-    onToggle: () => void
-    onOpen?: () => void
+    title: string;
+    date?: Date;
+    checked: boolean;
+    onToggle: () => void;
+    onOpen?: () => void;
 }) => (
     <div
         onClick={onToggle}
@@ -318,15 +352,19 @@ const SuggestItem = ({
         `}
     >
         <div className="flex items-start gap-3">
-            <div className={`
+            <div
+                className={`
                 mt-0.5 w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-colors
                 ${checked ? 'bg-primary border-primary text-white' : 'border-gray-300 bg-white'}
-             `}>
+             `}
+            >
                 {checked && <div className="w-2 h-2 bg-white rounded-full" />}
             </div>
 
             <div className="min-w-0 flex-1">
-                <h4 className={`text-sm font-medium line-clamp-2 ${checked ? 'text-primary' : 'text-gray-700'}`}>
+                <h4
+                    className={`text-sm font-medium line-clamp-2 ${checked ? 'text-primary' : 'text-gray-700'}`}
+                >
                     {title}
                 </h4>
                 {date && (
@@ -356,32 +394,55 @@ const SuggestItem = ({
 );
 
 const STOPWORDS = new Set([
-    "the", "and", "for", "with", "that", "this", "from", "into", "about", "your",
-    "する", "いる", "ある", "こと", "ため", "よう", "これ", "それ", "どこ", "および", "また", "です", "ます"
+    'the',
+    'and',
+    'for',
+    'with',
+    'that',
+    'this',
+    'from',
+    'into',
+    'about',
+    'your',
+    'する',
+    'いる',
+    'ある',
+    'こと',
+    'ため',
+    'よう',
+    'これ',
+    'それ',
+    'どこ',
+    'および',
+    'また',
+    'です',
+    'ます',
 ]);
 
 const MAX_QUERY_TEXT_LENGTH = 1000;
 const MAX_TOP_TERMS = 8;
 const MAX_TOP_SENTENCES = 3;
 
-const normalizeText = (text: string): string => text.replace(/\s+/g, " ").trim();
+const normalizeText = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
 const extractOpeningFragment = (markdown: string): string => {
     const lines = markdown
-        .replace(/!\[[^\]]*]\([^)]*\)/g, "")
-        .replace(/\[([^\]]+)]\([^)]*\)/g, "$1")
+        .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+        .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
         .split(/\n+/)
-        .map((line) => normalizeText(
-            line
-                .replace(/^#{1,6}\s+/, "")
-                .replace(/^[-*+]\s+/, "")
-                .replace(/^\d+\.\s+/, "")
-                .replace(/^>\s?/, "")
-                .replace(/^- \[[ xX]\]\s+/, "")
-        ))
+        .map((line) =>
+            normalizeText(
+                line
+                    .replace(/^#{1,6}\s+/, '')
+                    .replace(/^[-*+]\s+/, '')
+                    .replace(/^\d+\.\s+/, '')
+                    .replace(/^>\s?/, '')
+                    .replace(/^- \[[ xX]\]\s+/, ''),
+            ),
+        )
         .filter(Boolean);
 
-    const fragment = lines.find((line) => line.length >= 12) || lines[0] || "";
+    const fragment = lines.find((line) => line.length >= 12) || lines[0] || '';
     return fragment.length > 96 ? `${fragment.slice(0, 96).trim()}...` : fragment;
 };
 
@@ -410,16 +471,16 @@ const splitSentences = (text: string): string[] => {
 const buildDistinctiveQueryText = ({
     sectionHeading,
     sectionText,
-    noteMarkdown
+    noteMarkdown,
 }: {
     sectionHeading?: string;
     sectionText?: string;
     noteMarkdown?: string;
 }): string | undefined => {
-    const normalizedSectionText = normalizeText(sectionText ?? "");
+    const normalizedSectionText = normalizeText(sectionText ?? '');
     if (!normalizedSectionText) return undefined;
 
-    const normalizedNote = normalizeText(noteMarkdown ?? "");
+    const normalizedNote = normalizeText(noteMarkdown ?? '');
     if (!normalizedNote) {
         return normalizedSectionText.slice(0, MAX_QUERY_TEXT_LENGTH);
     }
@@ -459,14 +520,14 @@ const buildDistinctiveQueryText = ({
         .slice(0, MAX_TOP_SENTENCES)
         .map((item) => item.sentence);
 
-    const headingLine = normalizeText(sectionHeading ?? "");
-    const termLine = topTerms.length > 0 ? topTerms.join(" ") : "";
-    const sentenceBlock = scoredSentences.join("\n");
+    const headingLine = normalizeText(sectionHeading ?? '');
+    const termLine = topTerms.length > 0 ? topTerms.join(' ') : '';
+    const sentenceBlock = scoredSentences.join('\n');
     const fallbackBlock = normalizedSectionText.slice(0, 500);
 
     const query = [headingLine, termLine, sentenceBlock || fallbackBlock]
         .filter(Boolean)
-        .join("\n")
+        .join('\n')
         .slice(0, MAX_QUERY_TEXT_LENGTH);
 
     return query || normalizedSectionText.slice(0, MAX_QUERY_TEXT_LENGTH);
@@ -474,8 +535,8 @@ const buildDistinctiveQueryText = ({
 
 const toDateSafe = (value: any): Date | undefined => {
     if (!value) return undefined;
-    if (typeof value.toDate === "function") return value.toDate();
+    if (typeof value.toDate === 'function') return value.toDate();
     if (value instanceof Date) return value;
-    if (typeof value._seconds === "number") return new Date(value._seconds * 1000);
+    if (typeof value._seconds === 'number') return new Date(value._seconds * 1000);
     return undefined;
 };

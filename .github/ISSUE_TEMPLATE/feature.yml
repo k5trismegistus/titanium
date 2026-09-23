@@ -1,7 +1,7 @@
 name: Feature or improvement
 description: Propose a user-facing or technical improvement for Titanium.
-title: "feat: "
-labels: ["type: feature", "status: triage"]
+title: 'feat: '
+labels: ['type: feature', 'status: triage']
 body:
   - type: textarea
     id: problem
