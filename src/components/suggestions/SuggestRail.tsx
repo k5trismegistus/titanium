@@ -59,13 +59,15 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     const { user } = useAuth();
     const { noteId: currentId } = useParams<{ noteId: string }>();
     const navigate = useNavigate();
-    const { activeSectionText, activeSectionHeading } = useEditorContext();
+    const { activeSectionText, activeSectionHeading, isTextSelected, isKeyboardOpen } =
+        useEditorContext();
     const [internalIsOpen, setInternalIsOpen] = useState(() => {
         if (typeof window === 'undefined') return true;
         return window.innerWidth >= 1024;
     });
     const [suggestions, setSuggestions] = useState<MixSelectableNote[]>([]);
     const [isHintVisible, setIsHintVisible] = useState(false);
+    const [activityTick, setActivityTick] = useState(0);
     const [loading, setLoading] = useState(false);
     const canOpenNotes = !demoSuggestions;
     const selectedIds = new Set(selectedNotes.map((note) => note.id));
@@ -104,16 +106,37 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
     }, [isOpen]);
 
     useEffect(() => {
+        const registerActivity = (event: Event) => {
+            if (event.target instanceof Element && event.target.closest('[data-related-hint]'))
+                return;
+            setIsHintVisible(false);
+            setActivityTick((previous) => previous + 1);
+        };
+        window.addEventListener('pointerdown', registerActivity);
+        window.addEventListener('keydown', registerActivity);
+        return () => {
+            window.removeEventListener('pointerdown', registerActivity);
+            window.removeEventListener('keydown', registerActivity);
+        };
+    }, []);
+
+    useEffect(() => {
         setIsHintVisible(false);
         if (typeof window === 'undefined') return;
-        if (isOpen || loading || !hintText) return;
+        if (isOpen || loading || !hintText || isTextSelected || isKeyboardOpen) return;
         if (window.innerWidth >= 1024) return;
 
         const timer = window.setTimeout(() => {
             setIsHintVisible(true);
         }, 1800);
         return () => window.clearTimeout(timer);
-    }, [queryText, isOpen, loading, hintText]);
+    }, [queryText, isOpen, loading, hintText, isTextSelected, isKeyboardOpen, activityTick]);
+
+    useEffect(() => {
+        if (!isHintVisible) return;
+        const timer = window.setTimeout(() => setIsHintVisible(false), 6000);
+        return () => window.clearTimeout(timer);
+    }, [isHintVisible]);
 
     useEffect(() => {
         if (demoSuggestions) {
@@ -322,10 +345,11 @@ const MobileRelatedHint = ({ text, onOpen }: { text: string; onOpen: () => void 
     return createPortal(
         <button
             type="button"
+            data-related-hint
             onClick={onOpen}
-            className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 rounded-2xl border border-emerald-100 bg-white/95 px-4 py-3 text-left text-sm leading-relaxed text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur transition-all lg:hidden"
+            className="fixed inset-x-5 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 overflow-hidden text-ellipsis whitespace-nowrap text-left text-xs font-medium text-emerald-800 drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)] lg:hidden"
         >
-            <span className="line-clamp-2">“{text}”</span>
+            <span>関連: “{text}”</span>
         </button>,
         document.body,
     );

@@ -182,7 +182,12 @@ export const NoteEditorPage: React.FC = () => {
                 isMixing={isMixing}
                 isMixAllowed={!!isAllowed}
             >
-                <MainEditor content={content} setContent={setContent} />
+                <MainEditor
+                    key={resolvedNoteId}
+                    content={content}
+                    setContent={setContent}
+                    canUseAI={!!isAllowed}
+                />
             </MainLayout>
 
             {isMixModalOpen && (

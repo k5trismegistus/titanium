@@ -1,12 +1,13 @@
 # Titanium Note
 
-A concept "Thought-Support" note-taking application powered by **Gemini** (via Vertex AI in Firebase), with **Gemini 3.0** preferred and **Gemini 2.5 Flash** as fallback.
+A concept "Thought-Support" note-taking application powered by **Gemini 3.8 Flash** through Firebase Functions.
 
 ## Features
 
-- **Clean Interface**: WYSIWYG-first editor with a Markdown toggle (raw + preview).
-- **Stable Markdown Source**: Mode switching does not rewrite note text, and single newlines are treated as line breaks.
-- **Mix**: Synthesize multiple notes into new insights using Gemini (3.0 preferred, 2.5 fallback).
+- **Clean Interface**: A single Tiptap rich editor backed by Markdown.
+- **Stable Markdown Source**: Existing note structure is preserved, and single newlines are treated as line breaks.
+- **Mix**: Synthesize multiple notes into new insights using Gemini 3.8 Flash.
+- **Selection AI**: Fact-check selected text with web citations or expand an outline after review while continuing to write.
 - **Quick Word**: Register a term to auto-generate an explainer note for future suggestions and Mix.
 - **Vector Search**: Semantic search across notes with top 5 results.
 - **Security**: Strict whitelist-based access control.
@@ -14,7 +15,7 @@ A concept "Thought-Support" note-taking application powered by **Gemini** (via V
 
 ## Prerequisites
 
-- Node.js (v20+)
+- Node.js 24 for local development and tests (Functions deploy on Node.js 22)
 - Firebase CLI (`npm install -g firebase-tools`)
 - A Firebase Project
 
@@ -42,7 +43,7 @@ Before deploying, you must enable the following services in the [Firebase Consol
 4. **Vertex AI (Gemini)**:
    - Go to **Build** > **Vertex AI in Firebase** (or search for Vertex AI).
    - Click **Get Started** or **Enable**.
-   - **Blaze Plan (Pay as you go)** is required for Gemini APIs (including Gemini 3.0 and Gemini 2.5 Flash). Upgrade your project plan if needed.
+   - **Blaze Plan (Pay as you go)** is required for Gemini API usage. The generation model uses the global endpoint.
 
 ## 2. Local Setup
 

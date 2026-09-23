@@ -15,6 +15,7 @@
     "lint": "eslint . --quiet",
     "lint:all": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",

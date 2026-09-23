@@ -3,6 +3,7 @@ import { generateEmbedding } from './embedding';
 import * as fs from 'fs';
 import * as path from 'path';
 import { VECTOR_DIMENSION } from './vectorConfig';
+import { generateText } from './generation';
 
 const resolveEnvInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -19,9 +20,6 @@ const forceRegenerate =
 const dryRun = process.argv.includes('--dry-run') || process.env.SALIENT_BACKFILL_DRY_RUN === '1';
 const uidArg = process.argv.find((arg) => arg.startsWith('--uid='));
 const targetUid = uidArg ? uidArg.slice('--uid='.length).trim() : '';
-
-const preferredLocations = ['asia-northeast1', 'us-central1'];
-const modelCandidates = ['gemini-3.0-flash', 'gemini-3.0-pro', 'gemini-2.5-flash'];
 
 type SalientItemType = 'keyword' | 'claim';
 
@@ -40,16 +38,6 @@ type BackfillStats = {
   skippedNoItems: number;
   failed: number;
   generatedItems: number;
-};
-
-let VertexAIClass: typeof import('@google-cloud/vertexai').VertexAI | null = null;
-
-const getVertexAIClass = async () => {
-  if (!VertexAIClass) {
-    const mod = await import('@google-cloud/vertexai');
-    VertexAIClass = mod.VertexAI;
-  }
-  return VertexAIClass;
 };
 
 const resolveProjectId = (): string | undefined => {
@@ -229,43 +217,18 @@ Markdown:
 ${markdown}
 `;
 
-  const VertexAI = await getVertexAIClass();
-  let lastError: unknown = null;
-
-  for (const location of preferredLocations) {
-    const vertexAI = new VertexAI({ location, project: projectId });
-    for (const model of modelCandidates) {
-      try {
-        const generativeModel = vertexAI.getGenerativeModel({ model });
-        const result = await generativeModel.generateContent(prompt);
-        const response = await result.response;
-        const text =
-          response.candidates?.[0].content.parts
-            ?.map((part: any) => (typeof part?.text === 'string' ? part.text : ''))
-            .join('\n')
-            .trim() ?? '';
-        if (!text) continue;
-
-        const jsonPayload = extractJsonObject(text);
-        if (!jsonPayload) continue;
-
-        const parsed = JSON.parse(jsonPayload) as Record<string, unknown>;
-        const keywordItems = parseSalientEntries(parsed.keywords, 'keyword', 0.75);
-        const claimItems = parseSalientEntries(parsed.claims, 'claim', 0.7);
-        const merged = dedupeAndTrimSalientItems([...keywordItems, ...claimItems]);
-        if (merged.length > 0) return merged;
-      } catch (e: any) {
-        lastError = e;
-        const message = e?.message || '';
-        const isNotFound = message.includes('NOT_FOUND') || message.includes('was not found');
-        if (isNotFound) continue;
-        console.warn(`Salient extraction failed on model=${model} location=${location}:`, e);
-      }
+  try {
+    const text = await generateText(prompt, projectId);
+    const jsonPayload = extractJsonObject(text);
+    if (jsonPayload) {
+      const parsed = JSON.parse(jsonPayload) as Record<string, unknown>;
+      const keywordItems = parseSalientEntries(parsed.keywords, 'keyword', 0.75);
+      const claimItems = parseSalientEntries(parsed.claims, 'claim', 0.7);
+      const merged = dedupeAndTrimSalientItems([...keywordItems, ...claimItems]);
+      if (merged.length > 0) return merged;
     }
-  }
-
-  if (lastError) {
-    console.warn('Gemini salient extraction failed; using fallback.', lastError);
+  } catch (error) {
+    console.warn('Gemini salient extraction failed; using fallback.', error);
   }
   return fallbackSalientItems(markdown);
 };

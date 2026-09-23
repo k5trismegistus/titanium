@@ -6,54 +6,6 @@ export type ActiveSection = {
     heading: string;
 };
 
-export const extractSectionAtCursor = (markdown: string, cursorIndex: number) => {
-    if (!markdown) {
-        return { heading: 'Introduction', content: '' };
-    }
-
-    const safeCursor = Math.max(0, Math.min(cursorIndex, markdown.length));
-    const headingRegex = /^#{1,3}\s+.*$/gm;
-    const matches = Array.from(markdown.matchAll(headingRegex));
-
-    if (matches.length === 0) {
-        return { heading: 'Introduction', content: markdown.trim() };
-    }
-
-    const firstHeadingIndex = matches[0].index ?? 0;
-    if (safeCursor < firstHeadingIndex) {
-        const nextStart = firstHeadingIndex;
-        return {
-            heading: 'Introduction',
-            content: markdown.slice(0, nextStart).trim(),
-        };
-    }
-
-    for (let i = 0; i < matches.length; i += 1) {
-        const match = matches[i];
-        const start = match.index ?? 0;
-        const next = matches[i + 1];
-        const nextStart = next?.index ?? markdown.length;
-
-        if (safeCursor >= start && safeCursor < nextStart) {
-            const headingLine = match[0];
-            const heading = headingLine.replace(/^#+\s+/, '');
-            const lineEnd = markdown.indexOf('\n', start);
-            const contentStart = lineEnd === -1 ? markdown.length : lineEnd + 1;
-            const content = markdown.slice(contentStart, nextStart).trim();
-            return { heading, content };
-        }
-    }
-
-    const lastMatch = matches[matches.length - 1];
-    const lastStart = lastMatch.index ?? 0;
-    const headingLine = lastMatch[0];
-    const heading = headingLine.replace(/^#+\s+/, '');
-    const lineEnd = markdown.indexOf('\n', lastStart);
-    const contentStart = lineEnd === -1 ? markdown.length : lineEnd + 1;
-    const content = markdown.slice(contentStart).trim();
-    return { heading, content };
-};
-
 export const updateActiveSectionFromEditor = (
     editor: Editor,
     setActiveSection: (next: ActiveSection) => void,

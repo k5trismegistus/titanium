@@ -1,12 +1,9 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
-import { projectID } from 'firebase-functions/params';
+import { generateText } from './generation';
 import { generateEmbedding } from './embedding';
 import { VECTOR_DIMENSION } from './vectorConfig';
 
-// デプロイ時の param 評価を避けるため、実行時に初期化する。
-const preferredLocations = ['asia-northeast1', 'us-central1'];
-const modelCandidates = ['gemini-3.0-flash', 'gemini-3.0-pro', 'gemini-2.5-flash'];
 const MAX_SALIENT_ITEMS = 6;
 const MAX_SALIENT_TEXT_LENGTH = 280;
 
@@ -16,16 +13,6 @@ type SalientItem = {
   text: string;
   type: SalientItemType;
   salienceScore: number;
-};
-
-let VertexAIClass: typeof import('@google-cloud/vertexai').VertexAI | null = null;
-
-const getVertexAIClass = async () => {
-  if (!VertexAIClass) {
-    const mod = await import('@google-cloud/vertexai');
-    VertexAIClass = mod.VertexAI;
-  }
-  return VertexAIClass;
 };
 
 const isValidEmbedding = (embedding: number[]): boolean =>
@@ -132,7 +119,6 @@ const fallbackSalientItems = (markdown: string): SalientItem[] => {
 };
 
 const extractSalientItemsWithGemini = async (markdown: string): Promise<SalientItem[]> => {
-  const project = projectID.value();
   const prompt = `
 Extract salient signals from the markdown note below.
 
@@ -154,45 +140,18 @@ Markdown:
 ${markdown}
 `;
 
-  const VertexAI = await getVertexAIClass();
-  let lastError: unknown = null;
-
-  for (const location of preferredLocations) {
-    const vertexAI = new VertexAI({ location, project });
-    for (const model of modelCandidates) {
-      try {
-        const generativeModel = vertexAI.getGenerativeModel({ model });
-        const result = await generativeModel.generateContent(prompt);
-        const response = await result.response;
-        const text =
-          response.candidates?.[0].content.parts
-            ?.map((part: any) => (typeof part?.text === 'string' ? part.text : ''))
-            .join('\n')
-            .trim() ?? '';
-        if (!text) continue;
-
-        const jsonPayload = extractJsonObject(text);
-        if (!jsonPayload) continue;
-
-        const parsed = JSON.parse(jsonPayload) as Record<string, unknown>;
-        const keywordItems = parseSalientEntries(parsed.keywords, 'keyword', 0.75);
-        const claimItems = parseSalientEntries(parsed.claims, 'claim', 0.7);
-        const merged = dedupeAndTrimSalientItems([...keywordItems, ...claimItems]);
-        if (merged.length > 0) return merged;
-      } catch (e: any) {
-        lastError = e;
-        const message = e?.message || '';
-        const isNotFound = message.includes('NOT_FOUND') || message.includes('was not found');
-        if (isNotFound) {
-          continue;
-        }
-        console.warn(`Salient extraction failed on model=${model} location=${location}:`, e);
-      }
+  try {
+    const text = await generateText(prompt);
+    const jsonPayload = extractJsonObject(text);
+    if (jsonPayload) {
+      const parsed = JSON.parse(jsonPayload) as Record<string, unknown>;
+      const keywordItems = parseSalientEntries(parsed.keywords, 'keyword', 0.75);
+      const claimItems = parseSalientEntries(parsed.claims, 'claim', 0.7);
+      const merged = dedupeAndTrimSalientItems([...keywordItems, ...claimItems]);
+      if (merged.length > 0) return merged;
     }
-  }
-
-  if (lastError) {
-    console.warn('Gemini salient extraction failed; using fallback.', lastError);
+  } catch (error) {
+    console.warn('Gemini salient extraction failed; using fallback.', error);
   }
   return fallbackSalientItems(markdown);
 };

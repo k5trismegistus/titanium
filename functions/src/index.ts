@@ -6,5 +6,6 @@ export * from './mix';
 export * from './triggers';
 export * from './search';
 export * from './quickWord';
+export * from './editorAssist';
 export * from './allowedUsers';
 // export * from "./embedding"; // Deprecated/stub

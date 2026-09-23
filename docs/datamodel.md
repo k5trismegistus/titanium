@@ -67,7 +67,7 @@ order:number
 
 - Markdown全文のみが編集対象
 - 差分管理はしない（全文上書き）
-- WYSIWYG と Markdown は同一の `notes.markdown` を表示・編集するだけで、モード切替では本文を書き換えない
+- 単一の Tiptap エディタが `notes.markdown` を表示・編集する。AI の範囲マーカーと結果は本文に保存しない
 - 単改行は titanium 独自仕様として改行として扱い、そのまま `notes.markdown` に保存する
 - Mixで生成されたノートも通常ノートと同一扱い
 - 履歴管理・参照関係は持たない

@@ -15,11 +15,11 @@ type DemoSectionState = {
 };
 
 const DEMO_CONTENT = `# デモの見どころ
-この画面は読み取り専用。WYSIWYGの見た目と関連ノート体験だけ確認できます。
+この画面は読み取り専用。ひとつのリッチエディタと関連ノート体験を確認できます。
 
-- 右上のトグルで WYSIWYG / Markdown を切り替え
-- WYSIWYGでも見出しの # が残る
-- Markdownモードでは下にPreviewが出る
+- 見出し・箇条書き・改行をそのまま表示
+- 本文は内部で Markdown として保存
+- 関連候補を開くと、今の文脈に近いノートが見つかる
 
 # 問いの核
 AIは「正解を出す」よりも「思考の流れを止めない」ほうが価値が高い。
@@ -46,7 +46,7 @@ const DEMO_SUGGESTIONS: DemoSuggestionMap = {
     デモの見どころ: [
         {
             id: 'demo-ui-1',
-            markdown: 'WYSIWYGとMarkdownを両立させる編集設計',
+            markdown: '単一のリッチエディタで書き続ける設計',
             updatedAt: new Date('2024-02-15'),
             score: 0.9,
         },

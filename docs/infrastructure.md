@@ -77,6 +77,10 @@
 ## 採用方針まとめ
 
 - 初期：Firebase + Gemini API
+- 文章生成：東京リージョンの Firebase Functions から Vertex AI の `gemini-3.8-flash` を global 接続先で呼ぶ。Mix・単語補完・派生テキスト・選択範囲の展開で共通化する。
+- ファクトチェック：同じ Functions で認証と `allowedUsers` を検証してから Google Search grounding を使う。検索結果の出典と Search Suggestions を画面に表示し、根拠が得られない回答は検証済みとして扱わない。Firebase AI Logic の Web 直呼びでは既存のホワイトリストをサーバー側で強制できないため、既存のサーバー経由を維持する。
+- 埋め込み：`gemini-embedding-001` と Firestore 向け 2048 次元への投影を維持し、再生成しない。
+- モデルと出典表示の実装根拠：[Gemini 3.8 Flash](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash)、[Grounding with Google Search](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/grounding/grounding-with-google-search)。
 - 重視するもの：
   - 体験
   - 試行錯誤の速さ

@@ -1,6 +1,6 @@
 # AI 開発向けガイド
 
-調査基準: 2026-09-23 の `origin/main`。ここに記すのはリポジトリ内の実装であり、デプロイ済み環境の状態ではない。
+調査基準: 2026-09-23 の作業ツリー。ここに記すのはリポジトリ内の実装であり、デプロイ済み環境の状態ではない。
 
 ## プロダクトと作業の入口
 
@@ -13,15 +13,16 @@ Titanium は、ノートを書き、関連ノートを発見し、AI の Mix で
 | 場所                                                                   | 役割                                                        |
 | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `src/App.tsx`                                                          | ノート一覧、編集、読み取り専用デモのルーティング            |
-| `src/components/editor/MainEditor.tsx`                                 | WYSIWYG / Markdown の切り替えと現在のセクション管理         |
-| `src/components/editor/RichTextEditor.tsx`, `MarkdownEditor.tsx`       | 各編集モードの入力                                          |
+| `src/components/editor/MainEditor.tsx`                                 | 単一の Tiptap エディタを配置                                |
+| `src/components/editor/RichTextEditor.tsx`, `assistAnchors.ts`         | 入力、選択範囲の AI 操作、ジョブ位置の追跡                  |
 | `src/components/editor/editorMarkdown.ts`, `editorSections.ts`         | Markdown の往復変換、空行保持、カーソル位置のセクション抽出 |
 | `src/hooks/useSync.ts`                                                 | ノートの読込と Firestore への自動保存                       |
 | `src/components/suggestions/SuggestRail.tsx`                           | 関連候補、モバイルの全画面ドロワー、Mix の選択              |
 | `src/components/pages/NoteEditorPage.tsx`                              | Mix の実行、結果の保存、ノート削除                          |
 | `functions/src/triggers.ts`                                            | 本文更新後の埋め込み、セクション、salient item 生成         |
 | `functions/src/search.ts`                                              | Firestore vector search による関連検索とノート検索          |
-| `functions/src/mix.ts`, `quickWord.ts`                                 | Gemini による生成                                           |
+| `functions/src/generation.ts`, `editorAssist.ts`                       | Gemini 3.8 Flash の共通呼び出しと選択範囲の AI 操作         |
+| `functions/src/mix.ts`, `quickWord.ts`                                 | Mix と単語補完の生成                                        |
 | `functions/src/embedding.ts`, `randomProjection.ts`, `vectorConfig.ts` | 埋め込み生成と 2048 次元への射影                            |
 | `firestore.rules`, `storage.rules`, `firestore.indexes.json`           | 権限と検索用 index                                          |
 
@@ -29,16 +30,17 @@ Titanium は、ノートを書き、関連ノートを発見し、AI の Mix で
 
 ## データの流れと守るべき条件
 
-1. フロントは `notes/{noteId}` の `markdown` と `category` を保存する。WYSIWYG と Markdown を切り替えても、本文を意図せず書き換えない。単独の改行は表示上も改行として扱う。
+1. フロントは単一の Tiptap エディタから `notes/{noteId}` の `markdown` と `category` を保存する。単独の改行は表示上も改行として扱う。AI の範囲マーカーとジョブ結果は保存しない。
 2. `onNoteWritten` が本文変更に応じてノートの埋め込みと子コレクションの `sections` / `salientItems` を更新する。Firestore vector search の上限は 2048 次元で、保存時と検索時に同じ射影を使う。
 3. `searchRelated` は編集中の文脈から salient item の近傍検索を行い、必要に応じてノート単位の検索へ戻る。候補はユーザーのノートに限定する。モバイルでは関連候補を全画面ドロワーに表示する。
 4. `mix` はユーザーが所有するノートを読み、生成した Markdown を返す。保存はフロントの明示操作。`quickWord` は生成後にノートを作成する。
+5. `editorAssist` は認証と `allowedUsers` を検証し、クライアントから受け取った未保存分を含むノート本文を文脈に使う。展開案は確認後のみ選択範囲に適用する。ファクトチェックは Google Search grounding の出典がない場合、未検証として返す。
 
-Callable Functions は Admin SDK を使うため Firestore Rules を通らない。認証、`allowedUsers`、ノート所有権の確認は各 Callable でも必要。変更時は `functions/AGENTS.md` を参照する。
+Callable Functions は Admin SDK を使うため Firestore Rules を通らない。認証と `allowedUsers` を検証し、Firestore のノートを読む Callable は所有権も確認する。`editorAssist` はクライアントから渡された本文だけを処理し、Firestore のノートを読まない。変更時は `functions/AGENTS.md` を参照する。
 
 ## 検証と既知の確認事項
 
-ルートで `npm run lint`、`npm run format:check`、`npm run build`、Functions は `npm --prefix functions run build` を使う。既存の lint 警告も見るときは `npm run lint:all`。自動修正は `npm run lint:fix`、整形の適用は `npm run format`。テストと CI は未導入。
+ルートで `npm run lint`、`npm run format:check`、`npm run build`、`npm test`、Functions は `npm --prefix functions test` を使う。既存の lint 警告も見るときは `npm run lint:all`。自動修正は `npm run lint:fix`、整形の適用は `npm run format`。`npm test` は Node 24 で選択範囲の追跡を確認する。Functions のテストは Callable の認可と入力検証を確認する。編集可能な手動確認画面は `/tests/editorHarness.html`。CI は未導入。
 
 - `storage.rules` は現在、認証済みなら全パスの読み書きを許可する。画像やノートの所有権と照らした Rules テストが必要。
 - `searchRelated` は `searchNotes` と違い、入口で `allowedUsers` を確認しない。Callable の認可テストで確認する。
