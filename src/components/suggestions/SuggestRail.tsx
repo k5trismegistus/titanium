@@ -227,7 +227,7 @@ export const SuggestRail: React.FC<SuggestRailProps> = ({
 
                 {isOpen ? (
                     <div className="flex h-full flex-col">
-                        <div className="px-5 pb-4 pl-16 pt-[calc(1rem+env(safe-area-inset-top))] lg:p-4 lg:pl-12">
+                        <div className="border-b border-gray-200 px-5 pb-4 pl-16 pt-[calc(1rem+env(safe-area-inset-top))] lg:p-4 lg:pl-12">
                             <div className="flex min-h-10 items-center gap-2 text-gray-500 text-sm font-medium">
                                 <Lightbulb size={18} />
                                 <span>Related Thoughts</span>
@@ -347,9 +347,9 @@ const MobileRelatedHint = ({ text, onOpen }: { text: string; onOpen: () => void 
             type="button"
             data-related-hint
             onClick={onOpen}
-            className="fixed inset-x-5 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 overflow-hidden text-ellipsis whitespace-nowrap text-left text-xs font-medium text-emerald-800 drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)] lg:hidden"
+            className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-4 z-40 max-w-[calc(100vw-2rem)] truncate rounded-lg border border-emerald-200 bg-white/95 px-3 py-2 text-left text-xs font-medium text-emerald-900 shadow-sm backdrop-blur-sm lg:hidden"
         >
-            <span>関連: “{text}”</span>
+            <span>Related: “{text}”</span>
         </button>,
         document.body,
     );
@@ -372,7 +372,7 @@ const SuggestItem = ({
         onClick={onToggle}
         className={`
             group p-3 rounded-xl border shadow-sm transition-all cursor-pointer
-            ${checked ? 'bg-green-50 border-primary ring-1 ring-primary' : 'bg-white border-gray-100 hover:shadow-md'}
+            ${checked ? 'bg-green-50 border-primary ring-1 ring-primary' : 'bg-white border-gray-200 hover:shadow-md'}
         `}
     >
         <div className="flex items-start gap-3">

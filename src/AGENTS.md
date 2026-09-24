@@ -25,9 +25,11 @@ behavior, `components/suggestions/` owns related-note presentation, and
 - Design mobile first. On mobile, related notes use a full-screen drawer rather
   than competing with the editor in a narrow column; controls must remain
   reachable with the keyboard open and safe-area insets.
-- Mobile related-note hints are small, background-free text and stay hidden
+- Mobile related-note hints are compact text chips with a light background and border, and stay hidden
   during input, keyboard display, or selection.
-- Keep user-visible Japanese and English copy consistent with nearby UI.
+- Use English by default for in-app controls, status messages, and accessibility
+  labels. Login and help may offer an explicit Japanese translation. Preserve
+  the language of user notes and AI-generated content.
 - Prefer local component state and the existing `EditorContext` over a new
   state-management library.
 - Validate frontend changes with `npm run lint` and `npm run build`.

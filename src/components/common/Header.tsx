@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { HelpCircle, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/firebase/auth';
 import { HelpModal } from './HelpModal';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { useUserCategories } from '../../hooks/useUserCategories';
@@ -15,8 +15,6 @@ export const Header: React.FC = () => {
     const [quickWord, setQuickWord] = useState('');
     const [isQuickWordSaving, setIsQuickWordSaving] = useState(false);
     const navigate = useNavigate();
-    const location = useLocation();
-    const isDemoRoute = location.pathname === '/demo';
     const { categories } = useUserCategories();
     const defaultCategory = categories[0] || 'Memo';
 
@@ -79,6 +77,7 @@ export const Header: React.FC = () => {
                                 onClick={() => setIsQuickWordOpen((prev) => !prev)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
                                 type="button"
+                                aria-label="Quick Word"
                             >
                                 <Sparkles size={16} />
                                 <span className="hidden sm:inline">Quick Word</span>
@@ -115,10 +114,12 @@ export const Header: React.FC = () => {
                             )}
                         </div>
                     )}
-                    {(user || isDemoRoute) && (
+                    {user && isAllowed && (
                         <button
                             onClick={handleCreateNote}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            aria-label="New Note"
+                            title="New Note"
                         >
                             <Plus size={16} />
                             <span className="hidden sm:inline">New Note</span>

@@ -10,7 +10,7 @@ interface HelpModalProps {
 }
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
-    const [lang, setLang] = useState<'en' | 'jp'>('jp');
+    const [lang, setLang] = useState<'en' | 'jp'>('en');
     const isJP = lang === 'jp';
 
     if (!isOpen) return null;
@@ -29,7 +29,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                         >
                             <Globe size={14} />
-                            {isJP ? 'English' : '日本語'}
+                            {isJP ? 'English' : 'Japanese'}
                         </button>
                         <button
                             onClick={onClose}
@@ -91,7 +91,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                         右上のステータスで保存状態を確認できます。
                                     </p>
                                     <p>
-                                        Markdown記法に対応しており、下部のPreviewで見え方を即確認できます。
+                                        書式はエディタ内に直接表示されます。見出しやリストは上部のツールバーから設定できます。
                                     </p>
                                 </>
                             ) : (
@@ -102,8 +102,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                                         shows whether it’s saved.
                                     </p>
                                     <p>
-                                        Markdown is supported, and the Preview below lets you
-                                        confirm formatting as you go.
+                                        Formatting appears directly in the editor. Use the toolbar
+                                        for headings and lists.
                                     </p>
                                 </>
                             )}
@@ -117,8 +117,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             />
                             <figcaption className="text-xs text-gray-400">
                                 {isJP
-                                    ? '書く → プレビュー → 自動保存の流れ'
-                                    : 'Write → Preview → Auto-save flow'}
+                                    ? '書く → 書式を整える → 自動保存の流れ'
+                                    : 'Write → Format → Auto-save flow'}
                             </figcaption>
                         </figure>
                     </section>

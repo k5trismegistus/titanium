@@ -1,20 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Calendar, Loader2, Trash2 } from 'lucide-react';
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    orderBy,
-    addDoc,
-    serverTimestamp,
-    deleteDoc,
-    doc,
-} from 'firebase/firestore';
+import { FileText, Calendar, Loader2, Trash2 } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { useAuth } from '../../lib/firebase/auth';
-import { useUserCategories } from '../../hooks/useUserCategories';
 import { searchNotes } from '../../lib/firebase/functions';
 
 interface Note {
@@ -32,8 +21,6 @@ export const NoteList: React.FC = () => {
     const [searchResults, setSearchResults] = useState<Note[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
-    const { categories } = useUserCategories();
-    const defaultCategory = categories[0] || 'Memo';
 
     useEffect(() => {
         // If user is null, it means AuthProvider finished loading but no user was found (Auth failed)
@@ -106,23 +93,6 @@ export const NoteList: React.FC = () => {
         };
     }, [searchQuery, user]);
 
-    const handleCreateNote = async () => {
-        if (!user) return;
-        try {
-            const docRef = await addDoc(collection(db, 'notes'), {
-                userId: user.uid,
-                markdown: '',
-                category: defaultCategory,
-                updatedAt: serverTimestamp(),
-                createdAt: serverTimestamp(),
-            });
-            navigate(`/note/${docRef.id}`);
-        } catch (e) {
-            console.error('Failed to create note:', e);
-            alert('Failed to create note. Ensure you are whitelisted.');
-        }
-    };
-
     const handleDeleteNote = async (noteId: string) => {
         if (!user || deletingNoteId) return;
         const shouldDelete = window.confirm('Delete this note? This action cannot be undone.');
@@ -143,17 +113,10 @@ export const NoteList: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto p-6 min-h-[100dvh]">
-            <header className="flex justify-between items-center mb-8">
+            <header className="mb-8">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     Your Notes
                 </h1>
-                <button
-                    onClick={handleCreateNote}
-                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-full shadow hover:bg-green-600 transition-all hover:scale-105 active:scale-95"
-                >
-                    <Plus size={18} />
-                    New Note
-                </button>
             </header>
 
             <div className="mb-6">
@@ -256,15 +219,9 @@ export const NoteList: React.FC = () => {
                 </div>
             ) : notes.length === 0 ? (
                 <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    <p className="text-gray-500 mb-4">
-                        No notes yet. Start writing something amazing!
+                    <p className="text-gray-500">
+                        No notes yet. Use + in the header to create one.
                     </p>
-                    <button
-                        onClick={handleCreateNote}
-                        className="text-primary font-medium hover:underline"
-                    >
-                        Create your first note
-                    </button>
                 </div>
             ) : (
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

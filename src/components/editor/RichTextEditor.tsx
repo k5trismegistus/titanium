@@ -188,10 +188,7 @@ export const RichTextEditor = ({
                         ? {
                               ...job,
                               status: 'error',
-                              error:
-                                  error instanceof Error
-                                      ? error.message
-                                      : 'AI 処理に失敗しました。',
+                              error: error instanceof Error ? error.message : 'AI request failed.',
                           }
                         : job,
                 ),
@@ -225,12 +222,12 @@ export const RichTextEditor = ({
     const showMobileAssist = Boolean(canUseAI && selection);
 
     const toolbar = (
-        <div className="flex h-11 min-w-0 items-center bg-white/95 text-xs backdrop-blur">
+        <div className="flex h-11 min-w-0 items-center border-y border-slate-200 bg-white/95 text-xs backdrop-blur">
             {showMobileAssist && (
                 <div
                     className="flex w-full items-center gap-1 lg:hidden"
                     role="toolbar"
-                    aria-label="選択範囲の AI 操作"
+                    aria-label="AI actions for selected text"
                 >
                     <button
                         type="button"
@@ -238,7 +235,7 @@ export const RichTextEditor = ({
                         onPointerDown={(event) => event.preventDefault()}
                         onClick={() => void startAssist('factCheck')}
                     >
-                        ファクトチェック
+                        Fact-check
                     </button>
                     <button
                         type="button"
@@ -246,17 +243,17 @@ export const RichTextEditor = ({
                         onPointerDown={(event) => event.preventDefault()}
                         onClick={() => void startAssist('expandOutline')}
                     >
-                        文章に展開
+                        Expand outline
                     </button>
                 </div>
             )}
             <div
                 className={`${showMobileAssist ? 'hidden lg:flex' : 'flex'} min-w-0 gap-1 overflow-x-auto`}
                 role="toolbar"
-                aria-label="書式"
+                aria-label="Formatting"
             >
                 <FormatButton
-                    label="本文"
+                    label="Text"
                     action={() => editor.chain().focus().setParagraph().run()}
                 />
                 <FormatButton
@@ -272,25 +269,25 @@ export const RichTextEditor = ({
                     action={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                 />
                 <FormatButton
-                    label="箇条書き"
+                    label="Bullets"
                     action={() => editor.chain().focus().toggleBulletList().run()}
                 />
                 <FormatButton
-                    label="番号"
+                    label="Numbered"
                     action={() => editor.chain().focus().toggleOrderedList().run()}
                 />
                 <FormatButton
-                    label="チェック"
+                    label="Tasks"
                     action={() => editor.chain().focus().toggleTaskList().run()}
                 />
                 <FormatButton
-                    label="太字"
+                    label="Bold"
                     action={() => editor.chain().focus().toggleBold().run()}
                 />
                 <FormatButton
-                    label="画像"
+                    label="Image"
                     action={() => {
-                        const url = window.prompt('画像の URL を入力してください');
+                        const url = window.prompt('Enter an image URL');
                         if (url && /^https:\/\//i.test(url)) {
                             editor.chain().focus().setImage({ src: url }).run();
                         }
@@ -333,7 +330,7 @@ export const RichTextEditor = ({
                             onPointerDown={(event) => event.preventDefault()}
                             onClick={() => void startAssist('factCheck')}
                         >
-                            ファクトチェック
+                            Fact-check
                         </button>
                         <button
                             type="button"
@@ -341,7 +338,7 @@ export const RichTextEditor = ({
                             onPointerDown={(event) => event.preventDefault()}
                             onClick={() => void startAssist('expandOutline')}
                         >
-                            文章に展開
+                            Expand outline
                         </button>
                     </div>,
                     document.body,
@@ -357,10 +354,10 @@ export const RichTextEditor = ({
                                 className="rounded-xl border border-emerald-100 bg-white px-3 py-2 text-left text-xs text-slate-700 shadow-md"
                             >
                                 {job.status === 'error'
-                                    ? 'AI 処理に失敗しました'
+                                    ? 'AI request failed'
                                     : job.kind === 'factCheck'
-                                      ? 'ファクトチェック完了 · 結果を見る'
-                                      : '文章案が完成 · 確認する'}
+                                      ? 'Fact-check ready · View result'
+                                      : 'Draft ready · Review'}
                             </button>
                         ))}
                     </div>,
@@ -379,20 +376,20 @@ export const RichTextEditor = ({
                             aria-modal="true"
                             aria-label={
                                 openJob.kind === 'factCheck'
-                                    ? 'ファクトチェック結果'
-                                    : '文章案の確認'
+                                    ? 'Fact-check result'
+                                    : 'Review expanded draft'
                             }
                         >
                             <div className="mb-4 flex items-center justify-between gap-3">
                                 <h2 className="font-semibold">
-                                    {openJob.kind === 'factCheck' ? 'ファクトチェック' : '文章案'}
+                                    {openJob.kind === 'factCheck' ? 'Fact-check' : 'Expanded draft'}
                                 </h2>
                                 <button
                                     type="button"
                                     onClick={() => setOpenJobId(null)}
-                                    aria-label="閉じる"
+                                    aria-label="Close"
                                 >
-                                    閉じる
+                                    Close
                                 </button>
                             </div>
                             <p className="mb-4 line-clamp-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
@@ -407,14 +404,15 @@ export const RichTextEditor = ({
                             {openJob.result?.kind === 'expandOutline' && (
                                 <>
                                     <p className="mb-3 text-xs text-slate-500">
-                                        選択したアウトラインを次の文章に置き換えます。
+                                        Replace the selected outline with this draft.
                                     </p>
                                     <div className="max-h-[50dvh] overflow-y-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm">
                                         {openJob.result.replacementMarkdown}
                                     </div>
                                     {!openAnchor?.valid && (
                                         <p className="mt-3 text-sm text-amber-700">
-                                            元の範囲が編集されたため、置き換えできません。
+                                            The original selection changed, so it can no longer be
+                                            replaced.
                                         </p>
                                     )}
                                     <button
@@ -423,7 +421,7 @@ export const RichTextEditor = ({
                                         onClick={() => acceptExpansion(openJob)}
                                         className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-40"
                                     >
-                                        この文章に置き換える
+                                        Replace selection
                                     </button>
                                 </>
                             )}
@@ -432,7 +430,7 @@ export const RichTextEditor = ({
                                 onClick={() => dismissJob(openJob.id)}
                                 className="mt-4 ml-3 text-sm text-slate-500"
                             >
-                                {openJob.kind === 'factCheck' ? '閉じて破棄' : '案を破棄'}
+                                {openJob.kind === 'factCheck' ? 'Dismiss report' : 'Discard draft'}
                             </button>
                         </section>
                     </div>,
@@ -459,13 +457,14 @@ const FactCheckReport = ({ result }: { result: FactCheckResponse }) => {
             {result.grounded ? (
                 <>
                     <p className="text-xs text-slate-500">
-                        出典リンクのある記述のみ根拠を確認できます。リンクのない記述は未検証です。
+                        Only claims linked to a source have supporting evidence. Unlinked claims
+                        remain unverified.
                     </p>
                     <div className="whitespace-pre-wrap leading-relaxed">
                         <GroundedText result={result} />
                     </div>
                     <div>
-                        <h3 className="mb-2 font-semibold">出典</h3>
+                        <h3 className="mb-2 font-semibold">Sources</h3>
                         <ol className="space-y-1">
                             {result.sources.map((source) => (
                                 <li key={source.index}>
@@ -484,7 +483,8 @@ const FactCheckReport = ({ result }: { result: FactCheckResponse }) => {
                 </>
             ) : (
                 <p className="text-sm text-amber-700">
-                    公開情報から根拠を確認できませんでした。この文章は検証済みではありません。
+                    No supporting evidence was found in public sources. This text remains
+                    unverified.
                 </p>
             )}
             {result.searchSuggestionsHtml && (
@@ -521,7 +521,7 @@ const GroundedText = ({ result }: { result: FactCheckResponse }) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ml-0.5 align-super text-xs text-emerald-700 underline"
-                            aria-label={`出典 ${index + 1}`}
+                            aria-label={`Source ${index + 1}`}
                         >
                             [{index + 1}]
                         </a>

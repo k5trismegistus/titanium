@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
-    const [lang, setLang] = useState<'en' | 'jp'>('jp');
+    const [lang, setLang] = useState<'en' | 'jp'>('en');
     const isJP = lang === 'jp';
     const location = useLocation();
     const isDemoRoute = location.pathname === '/demo';
@@ -258,7 +258,7 @@ const LanguageToggle = ({ isJP, onToggle }: { isJP: boolean; onToggle: () => voi
         type="button"
     >
         <span className="material-symbols-outlined text-[18px]">language</span>
-        {isJP ? 'English' : '日本語'}
+        {isJP ? 'English' : 'Japanese'}
     </button>
 );
 

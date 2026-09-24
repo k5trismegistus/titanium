@@ -74,7 +74,7 @@ export const assistAnchors = new Plugin<AssistAnchor[]>({
                             const marker = document.createElement('span');
                             marker.className = 'assist-marker';
                             marker.textContent =
-                                anchor.status === 'running' ? 'AI 処理中' : 'AI 結果あり';
+                                anchor.status === 'running' ? 'AI is working' : 'AI result ready';
                             marker.setAttribute('aria-label', marker.textContent);
                             marker.contentEditable = 'false';
                             return marker;
