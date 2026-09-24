@@ -61,7 +61,7 @@ export const Header: React.FC = () => {
 
     return (
         <>
-            <header className="h-14 border-b border-muted flex items-center justify-between px-4 bg-white sticky top-0 z-50">
+            <header className="relative z-50 flex h-14 items-center justify-between border-b border-muted bg-white px-4">
                 <div
                     className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => navigate('/')}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -49,6 +49,8 @@ export const RichTextEditor = ({
     const [jobs, setJobs] = useState<AssistJob[]>([]);
     const [openJobId, setOpenJobId] = useState<string | null>(null);
     const [keyboardInset, setKeyboardInset] = useState(0);
+    const [mobileToolbarHost, setMobileToolbarHost] = useState<HTMLElement | null>(null);
+    const [desktopToolbarHost, setDesktopToolbarHost] = useState<HTMLElement | null>(null);
     const mounted = useRef(true);
     const { setEditorInteraction } = useEditorContext();
 
@@ -108,6 +110,11 @@ export const RichTextEditor = ({
             });
         };
     }, [setEditorInteraction]);
+
+    useLayoutEffect(() => {
+        setMobileToolbarHost(document.getElementById('titanium-mobile-editor-toolbar'));
+        setDesktopToolbarHost(document.getElementById('titanium-desktop-editor-toolbar'));
+    }, []);
 
     useEffect(() => {
         if (!editor) return;
@@ -215,52 +222,98 @@ export const RichTextEditor = ({
     const openJob = jobs.find((job) => job.id === openJobId);
     const openAnchor = openJob ? getAssistAnchor(editor.state, openJob.id) : undefined;
     const completed = jobs.filter((job) => job.status !== 'running');
+    const showMobileAssist = Boolean(canUseAI && selection);
+
+    const toolbar = (
+        <div className="flex h-11 min-w-0 items-center bg-white/95 text-xs backdrop-blur">
+            {showMobileAssist && (
+                <div
+                    className="flex w-full items-center gap-1 lg:hidden"
+                    role="toolbar"
+                    aria-label="選択範囲の AI 操作"
+                >
+                    <button
+                        type="button"
+                        className="assist-action"
+                        onPointerDown={(event) => event.preventDefault()}
+                        onClick={() => void startAssist('factCheck')}
+                    >
+                        ファクトチェック
+                    </button>
+                    <button
+                        type="button"
+                        className="assist-action"
+                        onPointerDown={(event) => event.preventDefault()}
+                        onClick={() => void startAssist('expandOutline')}
+                    >
+                        文章に展開
+                    </button>
+                </div>
+            )}
+            <div
+                className={`${showMobileAssist ? 'hidden lg:flex' : 'flex'} min-w-0 gap-1 overflow-x-auto`}
+                role="toolbar"
+                aria-label="書式"
+            >
+                <FormatButton
+                    label="本文"
+                    action={() => editor.chain().focus().setParagraph().run()}
+                />
+                <FormatButton
+                    label="H1"
+                    action={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                />
+                <FormatButton
+                    label="H2"
+                    action={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                />
+                <FormatButton
+                    label="H3"
+                    action={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                />
+                <FormatButton
+                    label="箇条書き"
+                    action={() => editor.chain().focus().toggleBulletList().run()}
+                />
+                <FormatButton
+                    label="番号"
+                    action={() => editor.chain().focus().toggleOrderedList().run()}
+                />
+                <FormatButton
+                    label="チェック"
+                    action={() => editor.chain().focus().toggleTaskList().run()}
+                />
+                <FormatButton
+                    label="太字"
+                    action={() => editor.chain().focus().toggleBold().run()}
+                />
+                <FormatButton
+                    label="画像"
+                    action={() => {
+                        const url = window.prompt('画像の URL を入力してください');
+                        if (url && /^https:\/\//i.test(url)) {
+                            editor.chain().focus().setImage({ src: url }).run();
+                        }
+                    }}
+                />
+            </div>
+        </div>
+    );
 
     return (
         <div className="space-y-4 pb-12">
-            {!readOnly && (
-                <div className="sticky top-[calc(var(--global-header-height,3.5rem)+var(--editor-header-height,0px))] z-20 flex gap-1 overflow-x-auto bg-white/95 py-2 text-xs backdrop-blur">
-                    <FormatButton
-                        label="本文"
-                        action={() => editor.chain().focus().setParagraph().run()}
-                    />
-                    <FormatButton
-                        label="H1"
-                        action={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                    />
-                    <FormatButton
-                        label="H2"
-                        action={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                    />
-                    <FormatButton
-                        label="H3"
-                        action={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                    />
-                    <FormatButton
-                        label="箇条書き"
-                        action={() => editor.chain().focus().toggleBulletList().run()}
-                    />
-                    <FormatButton
-                        label="番号"
-                        action={() => editor.chain().focus().toggleOrderedList().run()}
-                    />
-                    <FormatButton
-                        label="チェック"
-                        action={() => editor.chain().focus().toggleTaskList().run()}
-                    />
-                    <FormatButton
-                        label="太字"
-                        action={() => editor.chain().focus().toggleBold().run()}
-                    />
-                    <FormatButton
-                        label="画像"
-                        action={() => {
-                            const url = window.prompt('画像の URL を入力してください');
-                            if (url && /^https:\/\//i.test(url)) {
-                                editor.chain().focus().setImage({ src: url }).run();
-                            }
-                        }}
-                    />
+            {!readOnly &&
+                mobileToolbarHost &&
+                createPortal(<div className="lg:hidden">{toolbar}</div>, mobileToolbarHost)}
+            {!readOnly &&
+                desktopToolbarHost &&
+                createPortal(<div className="hidden lg:block">{toolbar}</div>, desktopToolbarHost)}
+            {!readOnly && (!mobileToolbarHost || !desktopToolbarHost) && (
+                <div
+                    className={`${mobileToolbarHost ? 'hidden' : 'block'} ${desktopToolbarHost ? 'lg:hidden' : 'lg:block'} sticky z-30`}
+                    style={{ top: 'var(--visual-viewport-top, 0px)' }}
+                >
+                    {toolbar}
                 </div>
             )}
             <EditorContent editor={editor} />
@@ -269,7 +322,7 @@ export const RichTextEditor = ({
                 selection &&
                 createPortal(
                     <div
-                        className="fixed inset-x-3 z-50 mx-auto flex w-fit max-w-[calc(100vw-1.5rem)] gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur"
+                        className="fixed inset-x-3 z-50 mx-auto hidden w-fit max-w-[calc(100vw-1.5rem)] gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur lg:flex"
                         style={{
                             bottom: `calc(${keyboardInset}px + 0.5rem + env(safe-area-inset-bottom))`,
                         }}

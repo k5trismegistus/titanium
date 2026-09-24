@@ -4,6 +4,7 @@ import { SuggestRail } from '../suggestions/SuggestRail';
 import type { DemoSuggestionMap } from '../suggestions/SuggestRail';
 import type { MixSelectableNote } from '../suggestions/SuggestRail';
 import { EditorProvider } from '../../context/EditorContext';
+import { useVisualViewportTop } from '../../hooks/useVisualViewportTop';
 
 type MainLayoutProps = {
     children: React.ReactNode;
@@ -36,6 +37,7 @@ export const MainLayout = ({
     isMixing,
     isMixAllowed,
 }: MainLayoutProps) => {
+    useVisualViewportTop();
     const [isSuggestOpen, setIsSuggestOpen] = useState(() => {
         if (typeof window === 'undefined') return true;
         return window.innerWidth >= 1024;
@@ -51,7 +53,7 @@ export const MainLayout = ({
                 }}
             >
                 {editorHeader && (
-                    <div className="sticky top-14 z-40 flex items-center border-b border-muted bg-white/95 backdrop-blur">
+                    <div className="relative z-40 flex items-center border-b border-muted bg-white/95 backdrop-blur">
                         <div className="min-w-0 flex-1">{editorHeader}</div>
                         <button
                             type="button"
@@ -64,8 +66,21 @@ export const MainLayout = ({
                         </button>
                     </div>
                 )}
+                {/* Keep toolbar sticky scopes outside the editor content. */}
+                <div
+                    id="titanium-mobile-editor-toolbar"
+                    className="sticky z-30 lg:hidden"
+                    style={{ top: 'var(--visual-viewport-top, 0px)' }}
+                />
                 <div className="flex min-h-[calc(100svh-3.5rem)] items-start">
-                    <main className="min-w-0 flex-1 px-4 py-8 lg:pr-8">{children}</main>
+                    <main className="min-w-0 flex-1 px-4 py-8 lg:pr-8">
+                        <div
+                            id="titanium-desktop-editor-toolbar"
+                            className="sticky z-30 mx-auto hidden max-w-2xl lg:block"
+                            style={{ top: 'var(--visual-viewport-top, 0px)' }}
+                        />
+                        {children}
+                    </main>
                     <aside className="shrink-0">
                         <SuggestRail
                             selectedNotes={selectedNotes}
