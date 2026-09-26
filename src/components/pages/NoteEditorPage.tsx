@@ -187,6 +187,7 @@ export const NoteEditorPage: React.FC = () => {
                     content={content}
                     setContent={setContent}
                     canUseAI={!!isAllowed}
+                    noteId={resolvedNoteId}
                 />
             </MainLayout>
 

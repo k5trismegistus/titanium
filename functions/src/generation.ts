@@ -1,4 +1,8 @@
-import { GoogleGenAI, type GenerateContentResponse } from '@google/genai';
+import {
+  GoogleGenAI,
+  type GenerateContentConfig,
+  type GenerateContentResponse,
+} from '@google/genai';
 import { projectID } from 'firebase-functions/params';
 
 export const GENERATION_MODEL = 'gemini-3.8-flash';
@@ -22,13 +26,20 @@ const getClient = (projectOverride?: string) => {
 
 export const generateContent = async (
   prompt: string,
-  options: { googleSearch?: boolean; project?: string } = {},
-): Promise<GenerateContentResponse> =>
-  getClient(options.project).models.generateContent({
+  options: { googleSearch?: boolean; project?: string; responseSchema?: unknown } = {},
+): Promise<GenerateContentResponse> => {
+  const config: GenerateContentConfig = {};
+  if (options.googleSearch) config.tools = [{ googleSearch: {} }];
+  if (options.responseSchema) {
+    config.responseMimeType = 'application/json';
+    config.responseSchema = options.responseSchema;
+  }
+  return getClient(options.project).models.generateContent({
     model: GENERATION_MODEL,
     contents: prompt,
-    config: options.googleSearch ? { tools: [{ googleSearch: {} }] } : undefined,
+    config,
   });
+};
 
 export const generateText = async (prompt: string, project?: string): Promise<string> => {
   const response = await generateContent(prompt, { project });

@@ -7,7 +7,8 @@ export const MainEditor: React.FC<{
     setContent: (next: string) => void;
     readOnly?: boolean;
     canUseAI?: boolean;
-}> = ({ content, setContent, readOnly = false, canUseAI = true }) => {
+    noteId?: string;
+}> = ({ content, setContent, readOnly = false, canUseAI = true, noteId }) => {
     const { setActiveSection } = useEditorContext();
 
     return (
@@ -17,6 +18,7 @@ export const MainEditor: React.FC<{
                 setContent={setContent}
                 readOnly={readOnly}
                 canUseAI={canUseAI}
+                noteId={noteId}
                 setActiveSection={setActiveSection}
             />
         </div>

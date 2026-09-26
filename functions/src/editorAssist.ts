@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateContent, generateText } from './generation';
+import { buildGroundingReport } from './groundingReport';
 
 type AssistRequest = {
   kind: 'factCheck' | 'expandOutline';
@@ -53,34 +54,9 @@ Write a concise report in the language of the selected passage. For each claim, 
 Whole note (context only):\n${noteMarkdown}\n\nPassage to verify:\n${selectedText}`,
         { googleSearch: true },
       );
-      const report = response.text?.trim() ?? '';
-      const metadata = response.candidates?.[0]?.groundingMetadata;
-      const sources = (metadata?.groundingChunks ?? [])
-        .map((chunk, index) => ({
-          index,
-          title: chunk.web?.title ?? '',
-          url: chunk.web?.uri ?? '',
-        }))
-        .filter((source) => /^https?:\/\//i.test(source.url));
-      const supports = (metadata?.groundingSupports ?? [])
-        .map((support) => ({
-          text: support.segment?.text ?? '',
-          sourceIndices: (support.groundingChunkIndices ?? []).filter((index) =>
-            sources.some((source) => source.index === index),
-          ),
-        }))
-        .filter(
-          (support) =>
-            support.text && report.includes(support.text) && support.sourceIndices.length > 0,
-        );
-      const grounded = Boolean(report) && sources.length > 0 && supports.length > 0;
       return {
         kind,
-        grounded,
-        report: grounded && report ? report : '',
-        sources: grounded ? sources : [],
-        supports: grounded ? supports : [],
-        searchSuggestionsHtml: metadata?.searchEntryPoint?.renderedContent ?? '',
+        ...buildGroundingReport(response),
       };
     } catch (error) {
       console.error('Editor assist failed:', error);

@@ -42,6 +42,48 @@ export const callEditorAssist = (data: EditorAssistRequest) =>
         'editorAssist',
     )(data);
 
+export type ArticleAssistKind = 'review' | 'articleFactCheck' | 'relatedMaterial' | 'openings';
+
+export type ArticleBlockInput = {
+    id: string;
+    type: 'heading' | 'paragraph';
+    text: string;
+    level?: number;
+};
+
+export type ArticleAssistRequest = {
+    kind: ArticleAssistKind;
+    noteMarkdown: string;
+    blocks: ArticleBlockInput[];
+    sourceNoteIds?: string[];
+};
+
+export type ArticleSuggestion = {
+    targetBlockId: string;
+    action: 'replace' | 'remove' | 'insertBefore' | 'insertAfter';
+    label: string;
+    reason: string;
+    replacementMarkdown: string;
+    sourceNoteId?: string;
+    sourceExcerpt?: string;
+};
+
+export type ArticleSuggestionsResponse = {
+    kind: 'review' | 'relatedMaterial' | 'openings';
+    suggestions: ArticleSuggestion[];
+};
+
+export type ArticleFactCheckResponse = Omit<FactCheckResponse, 'kind'> & {
+    kind: 'articleFactCheck';
+};
+
+export const callArticleAssist = (data: ArticleAssistRequest) =>
+    httpsCallable<ArticleAssistRequest, ArticleSuggestionsResponse | ArticleFactCheckResponse>(
+        functions,
+        'articleAssist',
+        { timeout: 190_000 },
+    )(data);
+
 export const searchRelated = (data: { noteId: string; limit?: number; queryText?: string }) =>
     httpsCallable<{ noteId: string; limit?: number; queryText?: string }, { results: any[] }>(
         functions,

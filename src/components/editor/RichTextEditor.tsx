@@ -8,13 +8,26 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import { Markdown } from 'tiptap-markdown';
 import { createPortal } from 'react-dom';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import { useEditorContext } from '../../context/EditorContext';
 import {
+    callArticleAssist,
     callEditorAssist,
+    searchRelated,
+    type ArticleAssistKind,
+    type ArticleFactCheckResponse,
+    type ArticleSuggestionsResponse,
     type EditorAssistRequest,
+    type ExpandOutlineResponse,
     type FactCheckResponse,
 } from '../../lib/firebase/functions';
 import { assistAnchors, getAssistAnchor, setAssistAnchorAction } from './assistAnchors';
+import {
+    collectArticleBlocks,
+    findCurrentArticleBlock,
+    getInvalidArticleBlockIds,
+    type ArticleBlock,
+} from './articleBlocks';
 import {
     getEditorMarkdown,
     prepareMarkdownForRichEditor,
@@ -25,29 +38,46 @@ import { ActiveSection, updateActiveSectionFromEditor } from './editorSections';
 
 type AssistJob = {
     id: string;
-    kind: EditorAssistRequest['kind'];
+    kind: EditorAssistRequest['kind'] | ArticleAssistKind;
     selectedText: string;
+    blocks: ArticleBlock[];
     status: 'running' | 'ready' | 'error';
-    result?: FactCheckResponse | { kind: 'expandOutline'; replacementMarkdown: string };
+    result?:
+        | FactCheckResponse
+        | ExpandOutlineResponse
+        | ArticleFactCheckResponse
+        | ArticleSuggestionsResponse;
+    decisions?: Record<number, 'accepted' | 'dismissed'>;
+    invalidBlockIds?: string[];
     error?: string;
 };
+
+const ARTICLE_ACTIONS: Array<{ kind: ArticleAssistKind; label: string; detail: string }> = [
+    { kind: 'review', label: 'Review draft', detail: 'Clarity, repetition, and cuts' },
+    { kind: 'articleFactCheck', label: 'Check all facts', detail: 'Sources for factual claims' },
+    { kind: 'relatedMaterial', label: 'Suggest past notes', detail: 'Ideas from your notes' },
+    { kind: 'openings', label: 'Title, opening & ending', detail: 'Three optional additions' },
+];
 
 export const RichTextEditor = ({
     content,
     setContent,
     readOnly,
     canUseAI,
+    noteId,
     setActiveSection,
 }: {
     content: string;
     setContent: (next: string) => void;
     readOnly: boolean;
     canUseAI: boolean;
+    noteId?: string;
     setActiveSection: (next: ActiveSection) => void;
 }) => {
     const [selection, setSelection] = useState<{ from: number; to: number } | null>(null);
     const [jobs, setJobs] = useState<AssistJob[]>([]);
     const [openJobId, setOpenJobId] = useState<string | null>(null);
+    const [aiMenuOpen, setAiMenuOpen] = useState(false);
     const [keyboardInset, setKeyboardInset] = useState(0);
     const [mobileToolbarHost, setMobileToolbarHost] = useState<HTMLElement | null>(null);
     const [desktopToolbarHost, setDesktopToolbarHost] = useState<HTMLElement | null>(null);
@@ -89,6 +119,19 @@ export const RichTextEditor = ({
         editorProps: { attributes: { class: 'tiptap' } },
         onUpdate: ({ editor, transaction }) => {
             if (!transaction.docChanged) return;
+            setJobs((previous) =>
+                previous.map((job) => {
+                    if (job.blocks.length === 0) return job;
+                    const invalid = getInvalidArticleBlockIds(
+                        editor.state.doc,
+                        job.blocks,
+                        job.invalidBlockIds,
+                    );
+                    return invalid.length === (job.invalidBlockIds?.length ?? 0)
+                        ? job
+                        : { ...job, invalidBlockIds: invalid };
+                }),
+            );
             setContent(getEditorMarkdown(editor));
             updateActiveSectionFromEditor(editor, setActiveSection);
         },
@@ -154,6 +197,28 @@ export const RichTextEditor = ({
         };
     }, [setEditorInteraction]);
 
+    useEffect(() => {
+        if (!aiMenuOpen) return;
+        const closeOnOutside = (event: PointerEvent) => {
+            if (!(event.target instanceof Element) || !event.target.closest('[data-ai-menu]')) {
+                setAiMenuOpen(false);
+            }
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setAiMenuOpen(false);
+        };
+        document.addEventListener('pointerdown', closeOnOutside);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('pointerdown', closeOnOutside);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [aiMenuOpen]);
+
+    useEffect(() => {
+        if (selection) setAiMenuOpen(false);
+    }, [selection]);
+
     const startAssist = async (kind: EditorAssistRequest['kind']) => {
         if (!editor || !selection || readOnly || !canUseAI) return;
         const { from, to } = selection;
@@ -163,7 +228,10 @@ export const RichTextEditor = ({
         const noteMarkdown = getEditorMarkdown(editor);
         setSelection(null);
         setEditorInteraction({ isTextSelected: false });
-        setJobs((previous) => [...previous, { id, kind, selectedText, status: 'running' }]);
+        setJobs((previous) => [
+            ...previous,
+            { id, kind, selectedText, blocks: [], status: 'running' },
+        ]);
         editor.view.dispatch(
             setAssistAnchorAction(editor.state.tr, {
                 type: 'add',
@@ -196,6 +264,104 @@ export const RichTextEditor = ({
         }
     };
 
+    const startArticleAssist = async (kind: ArticleAssistKind) => {
+        if (!editor || readOnly || !canUseAI) return;
+        setAiMenuOpen(false);
+        const noteMarkdown = getEditorMarkdown(editor);
+        const blocks = collectArticleBlocks(editor.state.doc);
+        if (!noteMarkdown.trim() || blocks.length === 0) return;
+        const id = crypto.randomUUID();
+        setJobs((previous) => [
+            ...previous,
+            { id, kind, selectedText: '', blocks, status: 'running' },
+        ]);
+        try {
+            let sourceNoteIds: string[] | undefined;
+            if (kind === 'relatedMaterial') {
+                const related = await searchRelated({
+                    noteId: noteId ?? '',
+                    limit: 5,
+                    queryText: noteMarkdown.slice(0, 2_000),
+                });
+                sourceNoteIds = related.data.results.map((item) => item.id);
+            }
+            const response = await callArticleAssist({
+                kind,
+                noteMarkdown,
+                blocks: blocks.map(({ id, type, text, level }) => ({
+                    id,
+                    type,
+                    text,
+                    ...(level === undefined ? {} : { level }),
+                })),
+                sourceNoteIds,
+            });
+            if (!mounted.current || editor.isDestroyed) return;
+            setJobs((previous) =>
+                previous.map((job) =>
+                    job.id === id ? { ...job, status: 'ready', result: response.data } : job,
+                ),
+            );
+        } catch (error) {
+            if (!mounted.current || editor.isDestroyed) return;
+            setJobs((previous) =>
+                previous.map((job) =>
+                    job.id === id
+                        ? {
+                              ...job,
+                              status: 'error',
+                              error: error instanceof Error ? error.message : 'AI request failed.',
+                          }
+                        : job,
+                ),
+            );
+        }
+    };
+
+    const decideSuggestion = (
+        job: AssistJob,
+        index: number,
+        decision: 'accepted' | 'dismissed',
+    ) => {
+        if (
+            !editor ||
+            job.result?.kind === 'articleFactCheck' ||
+            !job.result ||
+            !('suggestions' in job.result)
+        )
+            return;
+        if (job.decisions?.[index]) return;
+        const suggestion = job.result.suggestions[index];
+        if (!suggestion) return;
+        if (decision === 'accepted') {
+            if (job.invalidBlockIds?.includes(suggestion.targetBlockId)) return;
+            const original = job.blocks.find((block) => block.id === suggestion.targetBlockId);
+            const current = original && findCurrentArticleBlock(editor.state.doc, original);
+            if (!current) return;
+            const content = prepareMarkdownForRichEditor(suggestion.replacementMarkdown);
+            let applied: boolean;
+            if (suggestion.action === 'remove') {
+                applied = editor.commands.deleteRange({ from: current.from, to: current.to });
+            } else if (suggestion.action === 'replace') {
+                applied = editor.commands.insertContentAt(
+                    { from: current.from, to: current.to },
+                    content,
+                );
+            } else {
+                const at = suggestion.action === 'insertBefore' ? current.from : current.to;
+                applied = editor.commands.insertContentAt(at, content);
+            }
+            if (!applied) return;
+        }
+        setJobs((previous) =>
+            previous.map((item) =>
+                item.id === job.id
+                    ? { ...item, decisions: { ...item.decisions, [index]: decision } }
+                    : item,
+            ),
+        );
+    };
+
     const dismissJob = (id: string) => {
         if (editor && !editor.isDestroyed) {
             editor.view.dispatch(setAssistAnchorAction(editor.state.tr, { type: 'remove', id }));
@@ -219,10 +385,19 @@ export const RichTextEditor = ({
     const openJob = jobs.find((job) => job.id === openJobId);
     const openAnchor = openJob ? getAssistAnchor(editor.state, openJob.id) : undefined;
     const completed = jobs.filter((job) => job.status !== 'running');
+    const runningArticles = jobs.filter((job) => job.status === 'running' && job.blocks.length > 0);
     const showMobileAssist = Boolean(canUseAI && selection);
+    const jobTitle = (kind: AssistJob['kind']) =>
+        kind === 'factCheck'
+            ? 'Fact-check'
+            : kind === 'expandOutline'
+              ? 'Expanded draft'
+              : kind === 'articleFactCheck'
+                ? 'Article fact-check'
+                : (ARTICLE_ACTIONS.find((action) => action.kind === kind)?.label ?? 'AI result');
 
     const toolbar = (
-        <div className="flex h-11 min-w-0 items-center border-y border-slate-200 bg-white/95 text-xs backdrop-blur">
+        <div className="relative flex h-11 min-w-0 items-center border-y border-slate-200 bg-white/95 text-xs backdrop-blur">
             {showMobileAssist && (
                 <div
                     className="flex w-full items-center gap-1 lg:hidden"
@@ -248,51 +423,100 @@ export const RichTextEditor = ({
                 </div>
             )}
             <div
-                className={`${showMobileAssist ? 'hidden lg:flex' : 'flex'} min-w-0 gap-1 overflow-x-auto`}
-                role="toolbar"
-                aria-label="Formatting"
+                className={`${showMobileAssist ? 'hidden lg:flex' : 'flex'} min-w-0 flex-1 items-center`}
             >
-                <FormatButton
-                    label="Text"
-                    action={() => editor.chain().focus().setParagraph().run()}
-                />
-                <FormatButton
-                    label="H1"
-                    action={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                />
-                <FormatButton
-                    label="H2"
-                    action={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                />
-                <FormatButton
-                    label="H3"
-                    action={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                />
-                <FormatButton
-                    label="Bullets"
-                    action={() => editor.chain().focus().toggleBulletList().run()}
-                />
-                <FormatButton
-                    label="Numbered"
-                    action={() => editor.chain().focus().toggleOrderedList().run()}
-                />
-                <FormatButton
-                    label="Tasks"
-                    action={() => editor.chain().focus().toggleTaskList().run()}
-                />
-                <FormatButton
-                    label="Bold"
-                    action={() => editor.chain().focus().toggleBold().run()}
-                />
-                <FormatButton
-                    label="Image"
-                    action={() => {
-                        const url = window.prompt('Enter an image URL');
-                        if (url && /^https:\/\//i.test(url)) {
-                            editor.chain().focus().setImage({ src: url }).run();
-                        }
-                    }}
-                />
+                {canUseAI && !selection && (
+                    <div className="relative shrink-0" data-ai-menu>
+                        <button
+                            type="button"
+                            className="assist-action ml-1 flex items-center gap-1"
+                            onPointerDown={(event) => event.preventDefault()}
+                            onClick={() => setAiMenuOpen((open) => !open)}
+                            aria-expanded={aiMenuOpen}
+                            aria-haspopup="menu"
+                        >
+                            <Sparkles size={14} aria-hidden="true" /> AI{' '}
+                            <ChevronDown size={13} aria-hidden="true" />
+                        </button>
+                        {aiMenuOpen && (
+                            <div
+                                role="menu"
+                                aria-label="AI for whole article"
+                                className="absolute left-1 top-full z-50 mt-1 w-60 rounded-xl border border-violet-200 bg-white p-1 shadow-xl"
+                            >
+                                {ARTICLE_ACTIONS.map((action) => (
+                                    <button
+                                        key={action.kind}
+                                        type="button"
+                                        role="menuitem"
+                                        onPointerDown={(event) => event.preventDefault()}
+                                        onClick={() => void startArticleAssist(action.kind)}
+                                        disabled={jobs.some(
+                                            (job) =>
+                                                job.kind === action.kind &&
+                                                job.status === 'running',
+                                        )}
+                                        className="block w-full rounded-lg px-3 py-2 text-left hover:bg-violet-50 disabled:opacity-40"
+                                    >
+                                        <span className="block font-medium text-violet-800">
+                                            {action.label}
+                                        </span>
+                                        <span className="block text-[11px] text-slate-500">
+                                            {action.detail}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+                <div
+                    className="flex min-w-0 gap-1 overflow-x-auto"
+                    role="toolbar"
+                    aria-label="Formatting"
+                >
+                    <FormatButton
+                        label="Text"
+                        action={() => editor.chain().focus().setParagraph().run()}
+                    />
+                    <FormatButton
+                        label="H1"
+                        action={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                    />
+                    <FormatButton
+                        label="H2"
+                        action={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                    />
+                    <FormatButton
+                        label="H3"
+                        action={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                    />
+                    <FormatButton
+                        label="Bullets"
+                        action={() => editor.chain().focus().toggleBulletList().run()}
+                    />
+                    <FormatButton
+                        label="Numbered"
+                        action={() => editor.chain().focus().toggleOrderedList().run()}
+                    />
+                    <FormatButton
+                        label="Tasks"
+                        action={() => editor.chain().focus().toggleTaskList().run()}
+                    />
+                    <FormatButton
+                        label="Bold"
+                        action={() => editor.chain().focus().toggleBold().run()}
+                    />
+                    <FormatButton
+                        label="Image"
+                        action={() => {
+                            const url = window.prompt('Enter an image URL');
+                            if (url && /^https:\/\//i.test(url)) {
+                                editor.chain().focus().setImage({ src: url }).run();
+                            }
+                        }}
+                    />
+                </div>
             </div>
         </div>
     );
@@ -351,15 +575,24 @@ export const RichTextEditor = ({
                                 key={job.id}
                                 type="button"
                                 onClick={() => setOpenJobId(job.id)}
-                                className="rounded-xl border border-emerald-100 bg-white px-3 py-2 text-left text-xs text-slate-700 shadow-md"
+                                className="rounded-xl border border-violet-200 bg-white px-3 py-2 text-left text-xs text-slate-700 shadow-md"
                             >
                                 {job.status === 'error'
-                                    ? 'AI request failed'
-                                    : job.kind === 'factCheck'
-                                      ? 'Fact-check ready · View result'
-                                      : 'Draft ready · Review'}
+                                    ? `${jobTitle(job.kind)} failed · View details`
+                                    : `${jobTitle(job.kind)} ready · View result`}
                             </button>
                         ))}
+                    </div>,
+                    document.body,
+                )}
+            {runningArticles.length > 0 &&
+                createPortal(
+                    <div
+                        className="fixed right-3 top-[calc(4rem+env(safe-area-inset-top))] z-40 rounded-full border border-violet-200 bg-white/95 px-3 py-2 text-xs text-violet-800 shadow-sm"
+                        role="status"
+                    >
+                        <Sparkles size={13} className="mr-1 inline" aria-hidden="true" />
+                        AI working · Keep writing
                     </div>,
                     document.body,
                 )}
@@ -374,16 +607,10 @@ export const RichTextEditor = ({
                             onClick={(event) => event.stopPropagation()}
                             role="dialog"
                             aria-modal="true"
-                            aria-label={
-                                openJob.kind === 'factCheck'
-                                    ? 'Fact-check result'
-                                    : 'Review expanded draft'
-                            }
+                            aria-label={jobTitle(openJob.kind)}
                         >
                             <div className="mb-4 flex items-center justify-between gap-3">
-                                <h2 className="font-semibold">
-                                    {openJob.kind === 'factCheck' ? 'Fact-check' : 'Expanded draft'}
-                                </h2>
+                                <h2 className="font-semibold">{jobTitle(openJob.kind)}</h2>
                                 <button
                                     type="button"
                                     onClick={() => setOpenJobId(null)}
@@ -392,13 +619,16 @@ export const RichTextEditor = ({
                                     Close
                                 </button>
                             </div>
-                            <p className="mb-4 line-clamp-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-                                {openJob.selectedText}
-                            </p>
+                            {openJob.selectedText && (
+                                <p className="mb-4 line-clamp-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+                                    {openJob.selectedText}
+                                </p>
+                            )}
                             {openJob.status === 'error' && (
                                 <p className="text-sm text-red-700">{openJob.error}</p>
                             )}
-                            {openJob.result?.kind === 'factCheck' && (
+                            {(openJob.result?.kind === 'factCheck' ||
+                                openJob.result?.kind === 'articleFactCheck') && (
                                 <FactCheckReport result={openJob.result} />
                             )}
                             {openJob.result?.kind === 'expandOutline' && (
@@ -425,12 +655,130 @@ export const RichTextEditor = ({
                                     </button>
                                 </>
                             )}
+                            {openJob.result && 'suggestions' in openJob.result && (
+                                <div className="space-y-4">
+                                    {openJob.result.suggestions.length === 0 && (
+                                        <p className="text-sm text-slate-600">
+                                            No strong suggestions found for this draft.
+                                        </p>
+                                    )}
+                                    {openJob.result.suggestions.map((suggestion, index) => {
+                                        const original = openJob.blocks.find(
+                                            (block) => block.id === suggestion.targetBlockId,
+                                        );
+                                        const current =
+                                            !openJob.invalidBlockIds?.includes(
+                                                suggestion.targetBlockId,
+                                            ) &&
+                                            original &&
+                                            findCurrentArticleBlock(editor.state.doc, original);
+                                        const decision = openJob.decisions?.[index];
+                                        return (
+                                            <article
+                                                key={index}
+                                                className="rounded-xl border border-violet-100 p-4 text-sm"
+                                            >
+                                                <div className="mb-2 flex items-center justify-between gap-2">
+                                                    <h3 className="font-semibold text-violet-900">
+                                                        {suggestion.label}
+                                                    </h3>
+                                                    {decision && (
+                                                        <span className="text-xs text-slate-500">
+                                                            {decision === 'accepted'
+                                                                ? 'Accepted'
+                                                                : 'Dismissed'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="mb-3 text-slate-600">
+                                                    {suggestion.reason}
+                                                </p>
+                                                <p className="mb-2 text-xs text-slate-500">
+                                                    Target:{' '}
+                                                    {original?.text ?? 'Paragraph unavailable'}
+                                                </p>
+                                                {suggestion.sourceExcerpt && (
+                                                    <p className="mb-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
+                                                        From a past note: “
+                                                        {suggestion.sourceExcerpt}”{' '}
+                                                        {suggestion.sourceNoteId && (
+                                                            <a
+                                                                className="text-violet-700 underline"
+                                                                href={`/note/${encodeURIComponent(suggestion.sourceNoteId)}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                Open note
+                                                            </a>
+                                                        )}
+                                                    </p>
+                                                )}
+                                                <div className="whitespace-pre-wrap rounded-lg bg-violet-50 p-3 text-sm">
+                                                    <span className="mb-1 block text-xs font-medium text-violet-800">
+                                                        {suggestion.action === 'remove'
+                                                            ? 'Remove target'
+                                                            : suggestion.action === 'replace'
+                                                              ? 'Replace target with'
+                                                              : suggestion.action === 'insertBefore'
+                                                                ? 'Insert before target'
+                                                                : 'Insert after target'}
+                                                    </span>
+                                                    {suggestion.action === 'remove'
+                                                        ? 'The target text will be deleted.'
+                                                        : suggestion.replacementMarkdown}
+                                                </div>
+                                                {!current && !decision && (
+                                                    <p className="mt-2 text-xs text-amber-700">
+                                                        The target changed or is duplicated. This
+                                                        suggestion can no longer be applied.
+                                                    </p>
+                                                )}
+                                                {!decision && (
+                                                    <div className="mt-3 flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            disabled={!current}
+                                                            onClick={() =>
+                                                                decideSuggestion(
+                                                                    openJob,
+                                                                    index,
+                                                                    'accepted',
+                                                                )
+                                                            }
+                                                            className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-medium text-white disabled:opacity-40"
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                decideSuggestion(
+                                                                    openJob,
+                                                                    index,
+                                                                    'dismissed',
+                                                                )
+                                                            }
+                                                            className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                                                        >
+                                                            Dismiss
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => dismissJob(openJob.id)}
                                 className="mt-4 ml-3 text-sm text-slate-500"
                             >
-                                {openJob.kind === 'factCheck' ? 'Dismiss report' : 'Discard draft'}
+                                {openJob.kind === 'factCheck' || openJob.kind === 'articleFactCheck'
+                                    ? 'Dismiss report'
+                                    : openJob.kind === 'expandOutline'
+                                      ? 'Discard draft'
+                                      : 'Discard suggestions'}
                             </button>
                         </section>
                     </div>,
@@ -451,7 +799,8 @@ const FormatButton = ({ label, action }: { label: string; action: () => void }) 
     </button>
 );
 
-const FactCheckReport = ({ result }: { result: FactCheckResponse }) => {
+type GroundedReport = Omit<FactCheckResponse, 'kind'>;
+const FactCheckReport = ({ result }: { result: GroundedReport }) => {
     return (
         <div className="space-y-4 text-sm">
             {result.grounded ? (
@@ -499,7 +848,7 @@ const FactCheckReport = ({ result }: { result: FactCheckResponse }) => {
     );
 };
 
-const GroundedText = ({ result }: { result: FactCheckResponse }) => {
+const GroundedText = ({ result }: { result: GroundedReport }) => {
     const matches = result.supports
         .map((support) => ({ ...support, at: result.report.indexOf(support.text) }))
         .filter((support) => support.at >= 0)

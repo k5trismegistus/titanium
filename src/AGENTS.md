@@ -19,6 +19,10 @@ behavior, `components/suggestions/` owns related-note presentation, and
 - Selection-based AI markers and results are session-only editor state; never
   serialize them into `notes.markdown`. Replace selected text only after review,
   and reject replacement if the original selection changed.
+- Whole-article AI suggestions are also session-only. Apply each suggestion
+  only after the user accepts it, and disable acceptance when its target block
+  changed. The unselected toolbar offers whole-article actions; selected text
+  exposes the selection actions.
 
 ## UX and implementation
 
